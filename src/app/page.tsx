@@ -1,7 +1,7 @@
 'use client';
 
-import ChaiPakoraPortal from '@/components/ChaiPakoraPortal';
+import ReLoopAIPortal from '@/components/ReLoopAIPortal';
 
 export default function Home() {
-  return <ChaiPakoraPortal />;
+  return <ReLoopAIPortal />;
 }

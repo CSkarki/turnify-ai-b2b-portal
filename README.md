@@ -1,6 +1,6 @@
-# Chai-Pakora B2B Return Portal
+# ReLoop AI B2B Return Portal
 
-A modern web application for managing B2B returns for Chai-Pakora products.
+A modern web application for managing B2B returns for ReLoop AI products.
 
 ## Features
 

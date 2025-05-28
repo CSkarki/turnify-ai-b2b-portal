@@ -34,30 +34,35 @@ export type ReturnItem = {
   reason?: string;
 };
 
-export type ReturnData = {
-  id?: number;
-  rma_number?: string;
-  po_number?: string;
-  status?: string;
-  created_at?: string;
-  total_value?: number;
-  items?: ReturnItem[];
-  approval_needed?: boolean;
-  approver?: string;
-  tracking_number?: string;
-};
+interface ReturnData {
+  id: number;
+  rma_number: string;
+  po_number: string;
+  status: string;
+  created_at: string;
+  total_value: number;
+  items: {
+    sku: string;
+    title: string;
+    qty: number;
+    reason: string;
+  }[];
+  approval_needed: boolean;
+  approver?: string | null;
+  tracking_number?: string | null;
+}
 
 // Sample Data
-const sampleOrders = [
+const initialOrders = [
   {
     id: 1,
     po_number: "PO-2024-001",
     order_date: "2024-03-15",
     total: 15420.50,
     items: [
-      { sku: "CP-TEA-001", title: "Premium Masala Chai Mix", qty: 50, price: 12.50, available_return: 45 },
-      { sku: "CP-SNK-002", title: "Spiced Pakora Mix", qty: 30, price: 8.75, available_return: 30 },
-      { sku: "CP-TEA-003", title: "Green Tea Blend", qty: 25, price: 15.20, available_return: 20 }
+      { sku: "SH-SN-001", title: "Premium Running Shoes", qty: 50, price: 89.99, available_return: 45 },
+      { sku: "SH-CS-002", title: "Casual Sneakers", qty: 30, price: 59.99, available_return: 30 },
+      { sku: "SH-BT-003", title: "Leather Boots", qty: 25, price: 129.99, available_return: 20 }
     ]
   },
   {
@@ -66,13 +71,43 @@ const sampleOrders = [
     order_date: "2024-03-20",
     total: 8950.25,
     items: [
-      { sku: "CP-TEA-004", title: "Classic Chai Powder", qty: 40, price: 10.25, available_return: 35 },
-      { sku: "CP-SNK-005", title: "Onion Pakora Mix", qty: 20, price: 9.50, available_return: 18 }
+      { sku: "SH-SN-004", title: "Athletic Trainers", qty: 40, price: 79.99, available_return: 35 },
+      { sku: "SH-AC-005", title: "Shoe Care Kit", qty: 20, price: 24.99, available_return: 18 }
+    ]
+  },
+  {
+    id: 3,
+    po_number: "PO-2024-003",
+    order_date: "2024-03-22",
+    total: 12500.75,
+    items: [
+      { sku: "SH-SN-006", title: "Basketball Shoes", qty: 35, price: 99.99, available_return: 30 },
+      { sku: "SH-SN-007", title: "Tennis Shoes", qty: 25, price: 69.99, available_return: 20 }
+    ]
+  },
+  {
+    id: 4,
+    po_number: "PO-2024-004",
+    order_date: "2024-03-25",
+    total: 18750.00,
+    items: [
+      { sku: "SH-BT-008", title: "Hiking Boots", qty: 40, price: 149.99, available_return: 35 },
+      { sku: "SH-AC-009", title: "Shoe Insoles", qty: 50, price: 19.99, available_return: 45 }
+    ]
+  },
+  {
+    id: 5,
+    po_number: "PO-2024-005",
+    order_date: "2024-03-28",
+    total: 9500.50,
+    items: [
+      { sku: "SH-SN-010", title: "Slip-on Shoes", qty: 30, price: 49.99, available_return: 25 },
+      { sku: "SH-SN-011", title: "Loafers", qty: 25, price: 79.99, available_return: 20 }
     ]
   }
 ];
 
-const sampleReturns = [
+const initialReturns = [
   {
     id: 1,
     rma_number: "RMA-2024-001",
@@ -81,7 +116,7 @@ const sampleReturns = [
     created_at: "2024-03-22",
     total_value: 562.50,
     items: [
-      { sku: "CP-TEA-001", title: "Premium Masala Chai Mix", qty: 5, reason: "Damaged during transit" }
+      { sku: "SH-SN-001", title: "Premium Running Shoes", qty: 5, reason: "Damaged during transit" }
     ],
     approval_needed: true,
     approver: "John Smith (CSR)",
@@ -95,33 +130,169 @@ const sampleReturns = [
     created_at: "2024-03-23",
     total_value: 190.00,
     items: [
-      { sku: "CP-SNK-005", title: "Onion Pakora Mix", qty: 2, reason: "Wrong product received" }
+      { sku: "SH-AC-005", title: "Shoe Care Kit", qty: 2, reason: "Wrong product received" }
     ],
     approval_needed: true
+  },
+  {
+    id: 3,
+    rma_number: "RMA-2024-003",
+    po_number: "PO-2024-003",
+    status: "approved",
+    created_at: "2024-03-24",
+    total_value: 699.90,
+    items: [
+      { sku: "SH-SN-006", title: "Basketball Shoes", qty: 7, reason: "Quality issue" }
+    ],
+    approval_needed: false,
+    approver: "Auto-approved",
+    tracking_number: "1Z999AA2345678901"
+  },
+  {
+    id: 4,
+    rma_number: "RMA-2024-004",
+    po_number: "PO-2024-004",
+    status: "rejected",
+    created_at: "2024-03-25",
+    total_value: 149.99,
+    items: [
+      { sku: "SH-BT-008", title: "Hiking Boots", qty: 1, reason: "Customer changed mind" }
+    ],
+    approval_needed: true,
+    approver: "Sarah Johnson (CSR)"
+  },
+  {
+    id: 5,
+    rma_number: "RMA-2024-005",
+    po_number: "PO-2024-005",
+    status: "shipped",
+    created_at: "2024-03-26",
+    total_value: 399.95,
+    items: [
+      { sku: "SH-SN-010", title: "Slip-on Shoes", qty: 8, reason: "Size mismatch" }
+    ],
+    approval_needed: false,
+    approver: "Auto-approved",
+    tracking_number: "1Z999AA3456789012"
   }
 ];
 
+// Generate additional sample data
+const generateSampleData = () => {
+  const additionalOrders = [];
+  const additionalReturns = [];
+  const statuses = ['approved', 'pending', 'rejected', 'shipped'];
+  const reasons = [
+    'Damaged during transit',
+    'Wrong product received',
+    'Quality issue',
+    'Size mismatch',
+    'Customer changed mind',
+    'Defective product',
+    'Wrong color received',
+    'Package damaged'
+  ];
+  const approvers = [
+    'John Smith (CSR)',
+    'Sarah Johnson (CSR)',
+    'Mike Brown (CSR)',
+    'Auto-approved'
+  ];
+
+  // Generate 45 more orders (total 50)
+  for (let i = 6; i <= 50; i++) {
+    const orderDate = new Date(2024, 2, 15 + i);
+    const items = [
+      {
+        sku: `SH-SN-${String(i).padStart(3, '0')}`,
+        title: `Running Shoes Model ${i}`,
+        qty: Math.floor(Math.random() * 50) + 10,
+        price: Number((Math.random() * 50 + 49.99).toFixed(2)),
+        available_return: Math.floor(Math.random() * 40) + 10
+      },
+      {
+        sku: `SH-AC-${String(i).padStart(3, '0')}`,
+        title: `Shoe Accessories Set ${i}`,
+        qty: Math.floor(Math.random() * 30) + 5,
+        price: Number((Math.random() * 30 + 19.99).toFixed(2)),
+        available_return: Math.floor(Math.random() * 25) + 5
+      }
+    ];
+
+    additionalOrders.push({
+      id: i,
+      po_number: `PO-2024-${String(i).padStart(3, '0')}`,
+      order_date: orderDate.toISOString().split('T')[0],
+      total: Number(items.reduce((sum, item) => sum + (item.qty * item.price), 0).toFixed(2)),
+      items
+    });
+  }
+
+  // Generate 45 more returns (total 50)
+  for (let i = 6; i <= 50; i++) {
+    const returnDate = new Date(2024, 2, 22 + i);
+    const status = statuses[Math.floor(Math.random() * statuses.length)];
+    const items = [
+      {
+        sku: `SH-SN-${String(i).padStart(3, '0')}`,
+        title: `Running Shoes Model ${i}`,
+        qty: Math.floor(Math.random() * 10) + 1,
+        reason: reasons[Math.floor(Math.random() * reasons.length)]
+      }
+    ];
+
+    additionalReturns.push({
+      id: i,
+      rma_number: `RMA-2024-${String(i).padStart(3, '0')}`,
+      po_number: `PO-2024-${String(i).padStart(3, '0')}`,
+      status,
+      created_at: returnDate.toISOString().split('T')[0],
+      total_value: Number((items[0].qty * (Math.random() * 50 + 49.99)).toFixed(2)),
+      items,
+      approval_needed: status === 'pending',
+      approver: status === 'pending' ? null : approvers[Math.floor(Math.random() * approvers.length)],
+      tracking_number: status === 'shipped' ? `1Z999AA${Math.floor(Math.random() * 1000000)}` : null
+    });
+  }
+
+  return {
+    orders: [...initialOrders, ...additionalOrders],
+    returns: [...initialReturns, ...additionalReturns]
+  };
+};
+
+const { orders: sampleOrders, returns: sampleReturns } = generateSampleData();
+
 const sampleAnalytics = {
-  totalReturns: 156,
-  pendingApprovals: 23,
-  approvedReturns: 98,
-  rejectedReturns: 12,
-  totalValue: 45820.75,
+  totalReturns: sampleReturns.length,
+  pendingApprovals: sampleReturns.filter(r => r.status === 'pending').length,
+  approvedReturns: sampleReturns.filter(r => r.status === 'approved').length,
+  rejectedReturns: sampleReturns.filter(r => r.status === 'rejected').length,
+  totalValue: sampleReturns.reduce((sum, r) => sum + r.total_value, 0),
   avgProcessingTime: "2.3 days"
 };
 
-const ChaiPakoraPortal = () => {
+const ReLoopAIPortal = () => {
   const [currentView, setCurrentView] = useState<string>('landing');
-  const [userRole, setUserRole] = useState<string>('retail_partner'); // retail_partner, chai_pakora_csr, chai_pakora_admin
+  const [userRole, setUserRole] = useState<string>('retail_partner'); // retail_partner, admin_csr, admin_admin
   const [selectedItems, setSelectedItems] = useState<ReturnItem[]>([]);
-  const [returnData, setReturnData] = useState<ReturnData>({});
+  const [selectedReturn, setSelectedReturn] = useState<ReturnData>({
+    id: 0,
+    rma_number: '',
+    po_number: '',
+    status: '',
+    created_at: '',
+    total_value: 0,
+    items: [],
+    approval_needed: false
+  });
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
 
   // Navigation function
-  const navigate = (view: string, data: ReturnData = {}) => {
+  const navigate = (view: string, data?: ReturnData) => {
     setCurrentView(view);
-    if (data) setReturnData(data);
+    if (data) setSelectedReturn(data);
   };
 
   // Header Component
@@ -130,7 +301,7 @@ const ChaiPakoraPortal = () => {
       <div className="max-w-7xl mx-auto flex justify-between items-center">
         <div className="flex items-center space-x-4">
           <Package className="h-8 w-8 text-orange-400" />
-          <h1 className="text-2xl font-bold">Chai-Pakora B2B Return Portal</h1>
+          <h1 className="text-2xl font-bold">ReLoop AI: B2B Return Portal</h1>
         </div>
         <div className="flex items-center space-x-4">
           <span className="text-sm">Welcome, Store Manager</span>
@@ -140,8 +311,8 @@ const ChaiPakoraPortal = () => {
             className="bg-blue-800 border border-blue-700 rounded px-3 py-1 text-sm"
           >
             <option value="retail_partner">Retail Partner</option>
-            <option value="chai_pakora_csr">Chai-Pakora CSR</option>
-            <option value="chai_pakora_admin">Chai-Pakora Admin</option>
+            <option value="admin_csr">ReLoop AI CSR</option>
+            <option value="admin_admin">ReLoop AI Admin</option>
           </select>
         </div>
       </div>
@@ -211,7 +382,7 @@ const ChaiPakoraPortal = () => {
           <p className="text-green-100">Track status of your existing returns</p>
         </button>
         
-        {(userRole === 'chai_pakora_csr' || userRole === 'chai_pakora_admin') && (
+        {(userRole === 'admin_csr' || userRole === 'admin_admin') && (
           <button 
             onClick={() => navigate('admin-dashboard')}
             className="bg-orange-600 hover:bg-orange-700 text-white p-6 rounded-lg shadow-lg transition-colors"
@@ -465,43 +636,48 @@ const ChaiPakoraPortal = () => {
   };
 
   // Approval Pending Page
-  const ApprovalPendingPage = () => (
-    <div className="max-w-2xl mx-auto p-6">
-      <div className="bg-white rounded-lg shadow p-8 text-center">
-        <div className="bg-yellow-100 p-4 rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center">
-          <Clock className="h-10 w-10 text-yellow-600" />
-        </div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">Approval Required</h2>
-        <p className="text-gray-600 mb-6">Your return request has been submitted and is pending approval from our customer service team.</p>
-        
-        <div className="bg-yellow-50 p-6 rounded-lg mb-6">
-          <h3 className="font-semibold text-yellow-800 mb-2">What happens next?</h3>
-          <ul className="text-sm text-yellow-700 space-y-2 text-left">
-            <li>• Our CSR team has been notified via email</li>
-            <li>• They will review your request within 24 hours</li>
-            <li>• You'll receive an email notification once approved</li>
-            <li>• Shipping labels will be generated automatically</li>
-          </ul>
-        </div>
-        
-        <div className="text-center">
-          <p className="text-sm text-gray-600 mb-4">
-            RMA Number: <span className="font-medium">RMA-2024-{Math.floor(Math.random() * 1000)}</span>
-          </p>
-          <button 
-            onClick={() => navigate('landing')}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg"
-          >
-            Return to Dashboard
-          </button>
+  const ApprovalPendingPage = () => {
+    const rmaNumber = `RMA-2024-${String(Math.floor(1000)).padStart(3, '0')}`;
+    
+    return (
+      <div className="max-w-2xl mx-auto p-6">
+        <div className="bg-white rounded-lg shadow p-8 text-center">
+          <div className="bg-yellow-100 p-4 rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+            <Clock className="h-10 w-10 text-yellow-600" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Approval Required</h2>
+          <p className="text-gray-600 mb-6">Your return request has been submitted and is pending approval from our customer service team.</p>
+          
+          <div className="bg-yellow-50 p-6 rounded-lg mb-6">
+            <h3 className="font-semibold text-yellow-800 mb-2">What happens next?</h3>
+            <ul className="text-sm text-yellow-700 space-y-2 text-left">
+              <li>• Our CSR team has been notified via email</li>
+              <li>• They will review your request within 24 hours</li>
+              <li>• You'll receive an email notification once approved</li>
+              <li>• Shipping labels will be generated automatically</li>
+            </ul>
+          </div>
+          
+          <div className="text-center">
+            <p className="text-sm text-gray-600 mb-4">
+              RMA Number: <span className="font-medium">{rmaNumber}</span>
+            </p>
+            <button 
+              onClick={() => navigate('landing')}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg"
+            >
+              Return to Dashboard
+            </button>
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // Confirmation Page
   const ConfirmationPage = () => {
-    const rmaNumber = `RMA-2024-${Math.floor(Math.random() * 1000)}`;
+    const rmaNumber = `RMA-2024-${String(Math.floor(1000)).padStart(3, '0')}`;
+    const trackingNumber = `1Z999AA${String(Math.floor(1000000)).padStart(6, '0')}`;
     
     return (
       <div className="max-w-2xl mx-auto p-6">
@@ -523,7 +699,7 @@ const ChaiPakoraPortal = () => {
               </div>
               <div className="flex justify-between">
                 <span className="text-green-700">Tracking Number:</span>
-                <span className="font-medium text-green-900">1Z999AA{Math.floor(Math.random() * 1000000)}</span>
+                <span className="font-medium text-green-900">{trackingNumber}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-green-700">Return Items:</span>
@@ -862,7 +1038,7 @@ const ChaiPakoraPortal = () => {
           Back to Returns List
         </button>
         <h1 className="text-3xl font-bold text-gray-900">Return Details</h1>
-        <p className="text-gray-600 mt-2">{returnData.rma_number || 'RMA-2024-001'}</p>
+        <p className="text-gray-600 mt-2">{selectedReturn.rma_number || 'RMA-2024-001'}</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -873,25 +1049,25 @@ const ChaiPakoraPortal = () => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <p className="text-sm text-gray-600">RMA Number</p>
-                <p className="font-medium">{returnData.rma_number || 'RMA-2024-001'}</p>
+                <p className="font-medium">{selectedReturn.rma_number || 'RMA-2024-001'}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-600">PO Number</p>
-                <p className="font-medium">{returnData.po_number || 'PO-2024-001'}</p>
+                <p className="font-medium">{selectedReturn.po_number || 'PO-2024-001'}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-600">Status</p>
                 <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  (returnData.status || 'approved') === 'approved' ? 'bg-green-100 text-green-800' :
-                  (returnData.status || 'approved') === 'pending' ? 'bg-yellow-100 text-yellow-800' : 
+                  (selectedReturn.status || 'approved') === 'approved' ? 'bg-green-100 text-green-800' :
+                  (selectedReturn.status || 'approved') === 'pending' ? 'bg-yellow-100 text-yellow-800' : 
                   'bg-red-100 text-red-800'
                 }`}>
-                  {((returnData.status || 'approved').charAt(0).toUpperCase() + (returnData.status || 'approved').slice(1))}
+                  {((selectedReturn.status || 'approved').charAt(0).toUpperCase() + (selectedReturn.status || 'approved').slice(1))}
                 </span>
               </div>
               <div>
                 <p className="text-sm text-gray-600">Total Value</p>
-                <p className="font-medium">${returnData.total_value || '562.50'}</p>
+                <p className="font-medium">${selectedReturn.total_value || '562.50'}</p>
               </div>
             </div>
           </div>
@@ -900,7 +1076,7 @@ const ChaiPakoraPortal = () => {
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-xl font-semibold mb-4">Return Items</h2>
             <div className="space-y-4">
-              {(returnData.items || sampleReturns[0].items).map((item, index) => (
+              {(selectedReturn.items || sampleReturns[0].items).map((item, index) => (
                 <div key={index} className="border border-gray-200 rounded-lg p-4">
                   <div className="flex justify-between items-start">
                     <div>
@@ -929,7 +1105,7 @@ const ChaiPakoraPortal = () => {
                 </div>
                 <div>
                   <p className="font-medium">Return Created</p>
-                  <p className="text-sm text-gray-600">{returnData.created_at || '2024-03-22'}</p>
+                  <p className="text-sm text-gray-600">{selectedReturn.created_at || '2024-03-22'}</p>
                 </div>
               </div>
               <div className="flex items-center space-x-3">
@@ -954,13 +1130,13 @@ const ChaiPakoraPortal = () => {
           </div>
 
           {/* Shipping Information */}
-          {returnData.tracking_number && (
+          {selectedReturn.tracking_number && (
             <div className="bg-white rounded-lg shadow p-6">
               <h2 className="text-xl font-semibold mb-4">Shipping Information</h2>
               <div className="space-y-3">
                 <div>
                   <p className="text-sm text-gray-600">Tracking Number</p>
-                  <p className="font-medium">{returnData.tracking_number}</p>
+                  <p className="font-medium">{selectedReturn.tracking_number}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Carrier</p>
@@ -1016,4 +1192,4 @@ const ChaiPakoraPortal = () => {
   );
 };
 
-export default ChaiPakoraPortal;
+export default ReLoopAIPortal;

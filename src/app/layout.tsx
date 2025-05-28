@@ -2,8 +2,8 @@ import './globals.css'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Chai-Pakora B2B Return Portal',
-  description: 'B2B Return Management Portal for Chai-Pakora',
+  title: 'ReLoop AI B2B Return Portal',
+  description: 'B2B Return Management Portal for ReLoop AI',
 }
 
 export default function RootLayout({
