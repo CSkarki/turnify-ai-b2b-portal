@@ -272,7 +272,7 @@ const sampleAnalytics = {
   avgProcessingTime: "2.3 days"
 };
 
-const ReLoopAIPortal = () => {
+const TurnifyPortal = () => {
   const [currentView, setCurrentView] = useState<string>('landing');
   const [userRole, setUserRole] = useState<string>('retail_partner'); // retail_partner, admin_csr, admin_admin
   const [selectedItems, setSelectedItems] = useState<ReturnItem[]>([]);
@@ -301,7 +301,8 @@ const ReLoopAIPortal = () => {
       <div className="max-w-7xl mx-auto flex justify-between items-center">
         <div className="flex items-center space-x-4">
           <Package className="h-8 w-8 text-orange-400" />
-          <h1 className="text-2xl font-bold">ReLoop AI: B2B Return Portal</h1>
+          <h1 className="text-2xl font-bold">Turnify: B2B Return Portal</h1>
+          <p className="text-base text-gray-300 italic mt-1">Turnify – turning inventory efficiently.</p>
         </div>
         <div className="flex items-center space-x-4">
           <span className="text-sm">Welcome, Store Manager</span>
@@ -311,8 +312,8 @@ const ReLoopAIPortal = () => {
             className="bg-blue-800 border border-blue-700 rounded px-3 py-1 text-sm"
           >
             <option value="retail_partner">Retail Partner</option>
-            <option value="admin_csr">ReLoop AI CSR</option>
-            <option value="admin_admin">ReLoop AI Admin</option>
+            <option value="admin_csr">Turnify CSR</option>
+            <option value="admin_admin">Turnify Admin</option>
           </select>
         </div>
       </div>
@@ -1192,4 +1193,4 @@ const ReLoopAIPortal = () => {
   );
 };
 
-export default ReLoopAIPortal;
+export default TurnifyPortal;

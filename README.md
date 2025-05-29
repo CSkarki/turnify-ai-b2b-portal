@@ -1,6 +1,8 @@
-# ReLoop AI B2B Return Portal
+# Turnify B2B Return Portal
 
-A modern web application for managing B2B returns for ReLoop AI products.
+A modern web application for managing B2B returns for Turnify products.
+
+**Turnify – turning inventory efficiently.**
 
 ## Features
 

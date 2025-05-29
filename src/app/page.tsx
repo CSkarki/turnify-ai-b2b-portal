@@ -1,7 +1,7 @@
 'use client';
 
-import ReLoopAIPortal from '@/components/ReLoopAIPortal';
+import TurnifyPortal from '@/components/TurnifyPortal';
 
 export default function Home() {
-  return <ReLoopAIPortal />;
+  return <TurnifyPortal />;
 }
