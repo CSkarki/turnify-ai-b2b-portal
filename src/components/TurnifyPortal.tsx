@@ -288,6 +288,7 @@ const TurnifyPortal = () => {
   });
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [showAIFeatures, setShowAIFeatures] = useState(true);
 
   // Navigation function
   const navigate = (view: string, data?: ReturnData) => {
@@ -302,7 +303,14 @@ const TurnifyPortal = () => {
         <div className="flex items-center space-x-4">
           <Package className="h-8 w-8 text-orange-400" />
           <h1 className="text-2xl font-bold">Turnify: B2B Return Portal</h1>
-          <span className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-3 py-1 rounded-full text-xs font-bold ml-2">AI-powered</span>
+          <button
+            className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-3 py-1 rounded-full text-xs font-bold ml-2 focus:outline-none transition shadow hover:shadow-lg hover:scale-105 cursor-pointer"
+            style={{ cursor: 'pointer' }}
+            onClick={() => setShowAIFeatures(v => !v)}
+            title={showAIFeatures ? 'Hide AI Features' : 'Show AI Features'}
+          >
+            AI-powered
+          </button>
         </div>
         <div className="flex items-center space-x-4">
           <span className="text-sm">Welcome, Store Manager</span>
@@ -435,18 +443,32 @@ const TurnifyPortal = () => {
       </div>
 
       {/* AI Features Section */}
-      <div className="bg-blue-50 rounded-lg shadow p-6 mb-8">
-        <h2 className="text-xl font-bold text-blue-800 mb-2 flex items-center">
-          <span className="mr-2">🤖</span>AI Features in Turnify
-        </h2>
-        <ul className="list-disc pl-6 text-blue-900 text-sm">
-          <li>Automated return approval using AI risk analysis</li>
-          <li>AI-generated recommendations for manual review</li>
-          <li>Fraud detection and flagging of suspicious returns</li>
-          <li>Smart inventory optimization suggestions</li>
-          <li>Real-time AI status updates and explanations</li>
-        </ul>
-      </div>
+      {showAIFeatures && (
+        <div
+          className="bg-gradient-to-br from-blue-50/80 to-white/80 backdrop-blur-md shadow-xl rounded-2xl border border-blue-100 p-6 mb-8 max-w-md mx-auto md:mx-0 md:fixed md:right-8 md:top-28 md:w-96 animate-fade-in z-20"
+          style={{ transition: 'box-shadow 0.3s' }}
+        >
+          <div className="flex justify-between items-center mb-3">
+            <h2 className="text-2xl font-extrabold text-blue-800 flex items-center gap-2">
+              <span role="img" aria-label="AI">🤖</span>
+              AI Features in Turnify
+            </h2>
+            <button
+              className="ml-2 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded hover:bg-blue-200 transition"
+              onClick={() => setShowAIFeatures(false)}
+            >
+              Hide Me
+            </button>
+          </div>
+          <ul className="list-disc pl-6 text-blue-900 text-base space-y-1">
+            <li>Automated return approval using AI risk analysis</li>
+            <li>AI-generated recommendations for manual review</li>
+            <li>Fraud detection and flagging of suspicious returns</li>
+            <li>Smart inventory optimization suggestions</li>
+            <li>Real-time AI status updates and explanations</li>
+          </ul>
+        </div>
+      )}
     </div>
   );
 
