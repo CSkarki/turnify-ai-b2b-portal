@@ -302,7 +302,7 @@ const TurnifyPortal = () => {
         <div className="flex items-center space-x-4">
           <Package className="h-8 w-8 text-orange-400" />
           <h1 className="text-2xl font-bold">Turnify: B2B Return Portal</h1>
-          <p className="text-base text-gray-300 italic mt-1">Turnify – turning inventory efficiently.</p>
+          <span className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-3 py-1 rounded-full text-xs font-bold ml-2">AI-powered</span>
         </div>
         <div className="flex items-center space-x-4">
           <span className="text-sm">Welcome, Store Manager</span>
@@ -432,6 +432,20 @@ const TurnifyPortal = () => {
             ))}
           </div>
         </div>
+      </div>
+
+      {/* AI Features Section */}
+      <div className="bg-blue-50 rounded-lg shadow p-6 mb-8">
+        <h2 className="text-xl font-bold text-blue-800 mb-2 flex items-center">
+          <span className="mr-2">🤖</span>AI Features in Turnify
+        </h2>
+        <ul className="list-disc pl-6 text-blue-900 text-sm">
+          <li>Automated return approval using AI risk analysis</li>
+          <li>AI-generated recommendations for manual review</li>
+          <li>Fraud detection and flagging of suspicious returns</li>
+          <li>Smart inventory optimization suggestions</li>
+          <li>Real-time AI status updates and explanations</li>
+        </ul>
       </div>
     </div>
   );
@@ -623,13 +637,9 @@ const TurnifyPortal = () => {
           <div className="animate-spin h-12 w-12 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-6"></div>
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Processing Your Return Request</h2>
           <p className="text-gray-600 mb-4">Our AI system is analyzing your return request...</p>
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <p className="text-sm text-blue-800">
-              ✓ Validating return eligibility<br/>
-              ✓ Checking return policies<br/>
-              ✓ Calculating risk score<br/>
-              {needsApproval ? '• Approval required - forwarding to CSR' : '• Auto-approval granted'}
-            </p>
+          <div className="bg-blue-100 p-4 rounded-lg mb-4 flex items-center">
+            <span className="mr-2">��</span>
+            <span className="font-semibold text-blue-800">AI is analyzing your return for risk, eligibility, and policy compliance.</span>
           </div>
         </div>
       </div>
@@ -867,6 +877,10 @@ const TurnifyPortal = () => {
                     View Details
                   </button>
                 </div>
+
+                {returnItem.approver === 'Auto-approved' && (
+                  <span className="ml-2 bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-bold">AI Auto-Approved</span>
+                )}
               </div>
             ))}
           </div>
@@ -919,19 +933,10 @@ const TurnifyPortal = () => {
                 </div>
               </div>
               
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h4 className="font-medium mb-2">AI Recommendation</h4>
-                <div className="flex items-center space-x-2 mb-2">
-                  <span className="px-2 py-1 bg-green-100 text-green-800 text-sm rounded">
-                    Recommend: APPROVE
-                  </span>
-                  <span className="text-sm text-gray-600">Risk Score: Low (15/100)</span>
-                </div>
-                <p className="text-sm text-gray-700">
-                  ✓ Retail partner has good return history<br/>
-                  ✓ Return reason is valid<br/>
-                  ✓ Items within return window
-                </p>
+              <div className="bg-blue-50 p-4 rounded-lg mb-4 flex items-center">
+                <span className="mr-2">🤖</span>
+                <span className="font-semibold text-blue-800">AI Recommendation: <span className="text-green-700">APPROVE</span> (Low Risk)</span>
+                <span className="ml-2 text-xs text-blue-600">(AI auto-approves low-risk returns. High-risk returns are flagged for review.)</span>
               </div>
               
               <div className="mt-4">
