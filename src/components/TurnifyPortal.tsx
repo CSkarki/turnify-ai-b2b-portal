@@ -199,23 +199,23 @@ const generateSampleData = () => {
     'Auto-approved'
   ];
 
-  // Generate 45 more orders (total 50)
+  // Generate 45 more orders (total 50) - using deterministic values
   for (let i = 6; i <= 50; i++) {
     const orderDate = new Date(2024, 2, 15 + i);
     const items = [
       {
         sku: `SH-SN-${String(i).padStart(3, '0')}`,
         title: `Running Shoes Model ${i}`,
-        qty: Math.floor(Math.random() * 50) + 10,
-        price: Number((Math.random() * 50 + 49.99).toFixed(2)),
-        available_return: Math.floor(Math.random() * 40) + 10
+        qty: 20 + (i % 30), // Deterministic quantity
+        price: Number((50 + (i % 50) + 49.99).toFixed(2)), // Deterministic price
+        available_return: 15 + (i % 25) // Deterministic available return
       },
       {
         sku: `SH-AC-${String(i).padStart(3, '0')}`,
         title: `Shoe Accessories Set ${i}`,
-        qty: Math.floor(Math.random() * 30) + 5,
-        price: Number((Math.random() * 30 + 19.99).toFixed(2)),
-        available_return: Math.floor(Math.random() * 25) + 5
+        qty: 10 + (i % 20), // Deterministic quantity
+        price: Number((20 + (i % 30) + 19.99).toFixed(2)), // Deterministic price
+        available_return: 8 + (i % 17) // Deterministic available return
       }
     ];
 
@@ -228,16 +228,17 @@ const generateSampleData = () => {
     });
   }
 
-  // Generate 45 more returns (total 50)
+  // Generate 45 more returns (total 50) - using deterministic values
   for (let i = 6; i <= 50; i++) {
     const returnDate = new Date(2024, 2, 22 + i);
-    const status = statuses[Math.floor(Math.random() * statuses.length)];
+    const statusIndex = i % statuses.length; // Deterministic status
+    const status = statuses[statusIndex];
     const items = [
       {
         sku: `SH-SN-${String(i).padStart(3, '0')}`,
         title: `Running Shoes Model ${i}`,
-        qty: Math.floor(Math.random() * 10) + 1,
-        reason: reasons[Math.floor(Math.random() * reasons.length)]
+        qty: 1 + (i % 10), // Deterministic quantity
+        reason: reasons[i % reasons.length] // Deterministic reason
       }
     ];
 
@@ -247,11 +248,11 @@ const generateSampleData = () => {
       po_number: `PO-2024-${String(i).padStart(3, '0')}`,
       status,
       created_at: returnDate.toISOString().split('T')[0],
-      total_value: Number((items[0].qty * (Math.random() * 50 + 49.99)).toFixed(2)),
+      total_value: Number((items[0].qty * (50 + (i % 50) + 49.99)).toFixed(2)), // Deterministic value
       items,
       approval_needed: status === 'pending',
-      approver: status === 'pending' ? null : approvers[Math.floor(Math.random() * approvers.length)],
-      tracking_number: status === 'shipped' ? `1Z999AA${Math.floor(Math.random() * 1000000)}` : null
+      approver: status === 'pending' ? null : approvers[i % approvers.length], // Deterministic approver
+      tracking_number: status === 'shipped' ? `1Z999AA${String(100000 + i).padStart(6, '0')}` : null // Deterministic tracking
     });
   }
 
@@ -289,6 +290,23 @@ const TurnifyPortal = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [showAIFeatures, setShowAIFeatures] = useState(true);
+  const [shippingPreference, setShippingPreference] = useState('own'); // 'own', 'turnify', 'none'
+  const [searchBySKU, setSearchBySKU] = useState('');
+  const [openRA, setOpenRA] = useState(false);
+  const [customReturnReasons] = useState([
+    'Quality Issue',
+    'Wrong Size',
+    'Damaged in Transit',
+    'Customer Changed Mind',
+    'Defective Product',
+    'Wrong Color',
+    'Not as Described',
+    'Late Delivery',
+    'Duplicate Order',
+    'Other'
+  ]);
+  const [returnReasons, setReturnReasons] = useState<Record<string, string>>({});
+  const [returnQuantities, setReturnQuantities] = useState<Record<string, number>>({});
 
   // Navigation function
   const navigate = (view: string, data?: ReturnData) => {
@@ -466,6 +484,9 @@ const TurnifyPortal = () => {
             <li>Fraud detection and flagging of suspicious returns</li>
             <li>Smart inventory optimization suggestions</li>
             <li>Real-time AI status updates and explanations</li>
+            <li>Seamless SAP S/4 HANA integration</li>
+            <li>Configurable approval workflows and custom logic</li>
+            <li>Flexible product identifier support (SKU, UPC, EAN)</li>
           </ul>
         </div>
       )}
@@ -484,55 +505,166 @@ const TurnifyPortal = () => {
           Back to Dashboard
         </button>
         <h1 className="text-3xl font-bold text-gray-900">Select Items for Return</h1>
-        <p className="text-gray-600 mt-2">Choose items from your recent orders to return</p>
+        <p className="text-gray-600 mt-2">Choose items from your orders or search by SKU</p>
       </div>
 
-      {sampleOrders.map(order => (
-        <div key={order.id} className="bg-white rounded-lg shadow mb-6">
+      {/* SKU Search Section */}
+      <div className="bg-white rounded-lg shadow p-6 mb-6">
+        <h2 className="text-xl font-semibold mb-4 flex items-center">
+          <Search className="h-5 w-5 mr-2" />
+          Search by SKU (Long-tail Returns)
+        </h2>
+        <div className="flex gap-4 mb-4">
+          <input
+            type="text"
+            placeholder="Enter SKU to search..."
+            value={searchBySKU}
+            onChange={(e) => setSearchBySKU(e.target.value)}
+            className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg">
+            Search
+          </button>
+        </div>
+        <p className="text-sm text-gray-600">Search for items by SKU regardless of order date</p>
+      </div>
+
+      {/* Open RA Option */}
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="font-semibold text-yellow-800">Return Without Original Order</h3>
+            <p className="text-sm text-yellow-700">Create an "Open RA" for items without a specific order reference</p>
+          </div>
+          <button
+            onClick={() => setOpenRA(!openRA)}
+            className={`px-4 py-2 rounded-lg text-sm font-medium ${
+              openRA 
+                ? 'bg-yellow-600 text-white' 
+                : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+            }`}
+          >
+            {openRA ? 'Open RA Mode' : 'Create Open RA'}
+          </button>
+        </div>
+      </div>
+
+      {/* Order Selection */}
+      {!openRA && (
+        <div className="bg-white rounded-lg shadow">
           <div className="p-6 border-b border-gray-200">
-            <div className="flex justify-between items-center">
-              <div>
-                <h3 className="text-lg font-semibold">{order.po_number}</h3>
-                <p className="text-gray-600">Order Date: {order.order_date} • Total: ${order.total}</p>
-              </div>
-            </div>
+            <h2 className="text-xl font-semibold text-gray-900">Your Orders</h2>
           </div>
           <div className="p-6">
-            <div className="space-y-4">
-              {order.items.map(item => (
-                <div key={item.sku} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-                  <div className="flex items-center space-x-4">
-                    <input
-                      type="checkbox"
-                      className="h-4 w-4 text-blue-600"
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedItems((prev: ReturnItem[]) => [...prev, {
-                            ...item,
-                            po_number: order.po_number,
-                            return_qty: 1,
-                            reason: ''
-                          }]);
-                        } else {
-                          setSelectedItems((prev: ReturnItem[]) => prev.filter(selected => selected.sku !== item.sku));
-                        }
-                      }}
-                    />
+            <div className="space-y-6">
+              {sampleOrders.map(order => (
+                <div key={order.id} className="border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-4">
                     <div>
-                      <h4 className="font-medium">{item.title}</h4>
-                      <p className="text-sm text-gray-600">SKU: {item.sku} • Available for return: {item.available_return}</p>
+                      <h3 className="font-semibold">{order.po_number}</h3>
+                      <p className="text-sm text-gray-600">{order.order_date} • ${order.total.toLocaleString()}</p>
                     </div>
+                    <button 
+                      onClick={() => {
+                        const allItems = order.items.map(item => ({
+                          ...item,
+                          po_number: order.po_number,
+                          return_qty: item.available_return,
+                          reason: ''
+                        }));
+                        setSelectedItems(allItems);
+                      }}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm"
+                    >
+                      Select All Items
+                    </button>
                   </div>
-                  <div className="text-right">
-                    <p className="font-medium">${item.price ?? 0}</p>
-                    <p className="text-sm text-gray-600">Qty: {item.qty}</p>
+                  
+                  <div className="space-y-3">
+                    {order.items.map((item, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-4">
+                            <input
+                              type="checkbox"
+                              checked={selectedItems.some(selected => selected.sku === item.sku && selected.po_number === order.po_number)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedItems([...selectedItems, {
+                                    ...item,
+                                    po_number: order.po_number,
+                                    return_qty: item.available_return,
+                                    reason: ''
+                                  }]);
+                                } else {
+                                  setSelectedItems(selectedItems.filter(selected => 
+                                    !(selected.sku === item.sku && selected.po_number === order.po_number)
+                                  ));
+                                }
+                              }}
+                              className="h-4 w-4 text-blue-600"
+                            />
+                            <div>
+                              <p className="font-medium">{item.title}</p>
+                              <p className="text-sm text-gray-600">SKU: {item.sku} • Qty: {item.qty} • Available: {item.available_return}</p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-medium">${item.price}</p>
+                          <p className="text-sm text-gray-600">Available: {item.available_return}</p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               ))}
             </div>
           </div>
         </div>
-      ))}
+      )}
+
+      {/* Open RA Form */}
+      {openRA && (
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-xl font-semibold mb-4">Open RA - Return Without Order</h2>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Product Identifier</label>
+              <select className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="sku">SKU</option>
+                <option value="upc">UPC</option>
+                <option value="ean">EAN</option>
+                <option value="custom">Custom ID</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Product ID</label>
+              <input
+                type="text"
+                placeholder="Enter product identifier..."
+                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Quantity</label>
+              <input
+                type="number"
+                min="1"
+                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Return Reason</label>
+              <select className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                {customReturnReasons.map(reason => (
+                  <option key={reason} value={reason}>{reason}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+      )}
 
       {selectedItems.length > 0 && (
         <div className="fixed bottom-6 right-6">
@@ -550,8 +682,9 @@ const TurnifyPortal = () => {
 
   // Return Details Page
   const ReturnDetailsPage = () => {
-    const [returnReasons, setReturnReasons] = useState({});
-    const [returnQuantities, setReturnQuantities] = useState({});
+    const [returnReasons, setReturnReasons] = useState<Record<string, string>>({});
+    const [returnQuantities, setReturnQuantities] = useState<Record<string, number>>({});
+    const [shippingPreference, setShippingPreference] = useState('own');
 
     return (
       <div className="max-w-4xl mx-auto p-6">
@@ -567,70 +700,133 @@ const TurnifyPortal = () => {
           <p className="text-gray-600 mt-2">Provide details for your return request</p>
         </div>
 
-        <div className="bg-white rounded-lg shadow">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-semibold">Selected Items</h2>
+        {/* Custom Approval Logic Indicator */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+          <h3 className="font-semibold text-blue-800 mb-2 flex items-center">
+            <span className="mr-2">⚙️</span>
+            Custom Approval Logic
+          </h3>
+          <p className="text-sm text-blue-700">
+            Turnify's configurable workflow will evaluate your return based on quantity, value, customer profile, and custom criteria.
+          </p>
+        </div>
+
+        {/* Shipping Preferences */}
+        <div className="bg-white rounded-lg shadow p-6 mb-6">
+          <h2 className="text-xl font-semibold mb-4">Shipping Preferences</h2>
+          <div className="space-y-3">
+            <label className="flex items-center">
+              <input
+                type="radio"
+                name="shipping"
+                value="own"
+                checked={shippingPreference === 'own'}
+                onChange={(e) => setShippingPreference(e.target.value)}
+                className="mr-3"
+              />
+              <div>
+                <span className="font-medium">Use my own shipping account</span>
+                <p className="text-sm text-gray-600">We'll provide return details for your carrier</p>
+              </div>
+            </label>
+            <label className="flex items-center">
+              <input
+                type="radio"
+                name="shipping"
+                value="turnify"
+                checked={shippingPreference === 'turnify'}
+                onChange={(e) => setShippingPreference(e.target.value)}
+                className="mr-3"
+              />
+              <div>
+                <span className="font-medium">Use Turnify shipping label</span>
+                <p className="text-sm text-gray-600">We'll generate and email you a prepaid label</p>
+              </div>
+            </label>
+            <label className="flex items-center">
+              <input
+                type="radio"
+                name="shipping"
+                value="none"
+                checked={shippingPreference === 'none'}
+                onChange={(e) => setShippingPreference(e.target.value)}
+                className="mr-3"
+              />
+              <div>
+                <span className="font-medium">No shipping needed</span>
+                <p className="text-sm text-gray-600">Return details only, no label provided</p>
+              </div>
+            </label>
           </div>
-          <div className="p-6 space-y-6">
-            {selectedItems.map(item => (
-              <div key={item.sku} className="border border-gray-200 rounded-lg p-4">
+        </div>
+
+        {/* Return Items with Custom Reasons */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-xl font-semibold mb-4">Return Items</h2>
+          <div className="space-y-4">
+            {selectedItems.map((item, index) => (
+              <div key={index} className="border border-gray-200 rounded-lg p-4">
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <h3 className="font-medium">{item.title}</h3>
-                    <p className="text-sm text-gray-600">SKU: {item.sku} • From: {item.po_number}</p>
+                    <p className="text-sm text-gray-600">SKU: {item.sku} • PO: {item.po_number}</p>
                   </div>
-                  <p className="font-medium">${item.price ?? 0}</p>
+                  <div className="text-right">
+                    <p className="font-medium">${item.price}</p>
+                    <p className="text-sm text-gray-600">Available: {item.available_return}</p>
+                  </div>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Return Quantity (Max: {item.available_return})
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Return Quantity</label>
                     <input
                       type="number"
                       min="1"
                       max={item.available_return}
-                      defaultValue="1"
-                      className="w-full border border-gray-300 rounded-md px-3 py-2"
-                      onChange={(e) => setReturnQuantities({...returnQuantities, [item.sku]: e.target.value})}
+                      value={returnQuantities[item.sku] || 1}
+                      onChange={(e) => setReturnQuantities({
+                        ...returnQuantities,
+                        [item.sku]: parseInt(e.target.value)
+                      })}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Reason for Return
-                    </label>
-                    <select 
-                      className="w-full border border-gray-300 rounded-md px-3 py-2"
-                      onChange={(e) => setReturnReasons({...returnReasons, [item.sku]: e.target.value})}
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Return Reason</label>
+                    <select
+                      value={returnReasons[item.sku] || ''}
+                      onChange={(e) => setReturnReasons({
+                        ...returnReasons,
+                        [item.sku]: e.target.value
+                      })}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
-                      <option value="">Select reason</option>
-                      <option value="damaged">Damaged during transit</option>
-                      <option value="wrong_product">Wrong product received</option>
-                      <option value="quality_issue">Quality issue</option>
-                      <option value="expired">Product expired</option>
-                      <option value="overstock">Overstock</option>
+                      <option value="">Select a reason</option>
+                      {customReturnReasons.map(reason => (
+                        <option key={reason} value={reason}>{reason}</option>
+                      ))}
                     </select>
                   </div>
                 </div>
               </div>
             ))}
           </div>
-          
-          <div className="p-6 bg-gray-50 rounded-b-lg">
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="text-sm text-gray-600">Total Items: {selectedItems.length}</p>
-                <p className="text-sm text-gray-600">Estimated Value: ${selectedItems.reduce((sum, item) => sum + (item.price ?? 0), 0).toFixed(2)}</p>
-              </div>
-              <button 
-                onClick={() => navigate('approval-check')}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg"
-              >
-                Submit Return Request
-              </button>
-            </div>
-          </div>
+        </div>
+
+        <div className="mt-6 flex justify-end space-x-4">
+          <button 
+            onClick={() => navigate('item-selection')}
+            className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50"
+          >
+            Back
+          </button>
+          <button 
+            onClick={() => navigate('approval-check')}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg"
+          >
+            Submit Return Request
+          </button>
         </div>
       </div>
     );
@@ -638,7 +834,7 @@ const TurnifyPortal = () => {
 
   // Approval Check Page
   const ApprovalCheckPage = () => {
-    const needsApproval = Math.random() > 0.5; // Simulate AI decision
+    const needsApproval = true; // Deterministic value instead of Math.random() > 0.5
     
     useEffect(() => {
       // Simulate processing delay
@@ -660,7 +856,7 @@ const TurnifyPortal = () => {
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Processing Your Return Request</h2>
           <p className="text-gray-600 mb-4">Our AI system is analyzing your return request...</p>
           <div className="bg-blue-100 p-4 rounded-lg mb-4 flex items-center">
-            <span className="mr-2">��</span>
+            <span className="mr-2">⚙️</span>
             <span className="font-semibold text-blue-800">AI is analyzing your return for risk, eligibility, and policy compliance.</span>
           </div>
         </div>
