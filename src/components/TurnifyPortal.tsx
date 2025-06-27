@@ -32,6 +32,7 @@ export type ReturnItem = {
   po_number?: string;
   return_qty?: number;
   reason?: string;
+  isOpenRA?: boolean;
 };
 
 interface ReturnData {
@@ -262,16 +263,7 @@ const generateSampleData = () => {
   };
 };
 
-const { orders: sampleOrders, returns: sampleReturns } = generateSampleData();
-
-const sampleAnalytics = {
-  totalReturns: sampleReturns.length,
-  pendingApprovals: sampleReturns.filter(r => r.status === 'pending').length,
-  approvedReturns: sampleReturns.filter(r => r.status === 'approved').length,
-  rejectedReturns: sampleReturns.filter(r => r.status === 'rejected').length,
-  totalValue: sampleReturns.reduce((sum, r) => sum + r.total_value, 0),
-  avgProcessingTime: "2.3 days"
-};
+const { orders: sampleOrders } = generateSampleData();
 
 const TurnifyPortal = () => {
   const [currentView, setCurrentView] = useState<string>('landing');
@@ -293,6 +285,12 @@ const TurnifyPortal = () => {
   const [shippingPreference, setShippingPreference] = useState('own'); // 'own', 'turnify', 'none'
   const [searchBySKU, setSearchBySKU] = useState('');
   const [openRA, setOpenRA] = useState(false);
+  const [openRAForm, setOpenRAForm] = useState({
+    identifierType: 'sku',
+    productId: '',
+    quantity: 1,
+    reason: ''
+  });
   const [customReturnReasons] = useState([
     'Quality Issue',
     'Wrong Size',
@@ -307,6 +305,27 @@ const TurnifyPortal = () => {
   ]);
   const [returnReasons, setReturnReasons] = useState<Record<string, string>>({});
   const [returnQuantities, setReturnQuantities] = useState<Record<string, number>>({});
+
+  // Initialize returns data with state management
+  const [returnsData, setReturnsData] = useState<ReturnData[]>(() => {
+    const { returns } = generateSampleData();
+    return returns;
+  });
+
+  // Function to add new return
+  const addNewReturn = (newReturn: ReturnData) => {
+    setReturnsData(prev => [newReturn, ...prev]);
+  };
+
+  // Generate analytics from current returns data
+  const sampleAnalytics = {
+    totalReturns: returnsData.length,
+    pendingApprovals: returnsData.filter(r => r.status === 'pending').length,
+    approvedReturns: returnsData.filter(r => r.status === 'approved').length,
+    rejectedReturns: returnsData.filter(r => r.status === 'rejected').length,
+    totalValue: returnsData.reduce((sum, r) => sum + r.total_value, 0),
+    avgProcessingTime: '2.3 days'
+  };
 
   // Navigation function
   const navigate = (view: string, data?: ReturnData) => {
@@ -390,33 +409,39 @@ const TurnifyPortal = () => {
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
         <button 
           onClick={() => navigate('item-selection')}
-          className="bg-blue-600 hover:bg-blue-700 text-white p-6 rounded-lg shadow-lg transition-colors"
+          className="bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow-sm p-4 flex flex-col items-center hover:shadow-md transition"
         >
-          <Package className="h-12 w-12 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold mb-2">Create New Return</h3>
-          <p className="text-blue-100">Start a new return request for your products</p>
+          <Package className="h-8 w-8 text-white mb-2" />
+          <span className="font-semibold text-base">Create New Return</span>
+          <span className="text-xs text-blue-100 mt-1">Start a new return request</span>
         </button>
-        
+        <button 
+          onClick={() => navigate('open-ra')}
+          className="bg-orange-600 hover:bg-orange-700 text-white rounded-md shadow-sm p-4 flex flex-col items-center hover:shadow-md transition"
+        >
+          <AlertTriangle className="h-8 w-8 text-white mb-2" />
+          <span className="font-semibold text-base">Return Without Order</span>
+          <span className="text-xs text-orange-100 mt-1">Open RA for items w/o order</span>
+        </button>
         <button 
           onClick={() => navigate('returns-list')}
-          className="bg-green-600 hover:bg-green-700 text-white p-6 rounded-lg shadow-lg transition-colors"
+          className="bg-green-600 hover:bg-green-700 text-white rounded-md shadow-sm p-4 flex flex-col items-center hover:shadow-md transition"
         >
-          <Eye className="h-12 w-12 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold mb-2">View Returns</h3>
-          <p className="text-green-100">Track status of your existing returns</p>
+          <Eye className="h-8 w-8 text-white mb-2" />
+          <span className="font-semibold text-base">View Returns</span>
+          <span className="text-xs text-green-100 mt-1">Track your returns</span>
         </button>
-        
         {(userRole === 'admin_csr' || userRole === 'admin_admin') && (
           <button 
             onClick={() => navigate('admin-dashboard')}
-            className="bg-orange-600 hover:bg-orange-700 text-white p-6 rounded-lg shadow-lg transition-colors"
+            className="bg-purple-600 hover:bg-purple-700 text-white rounded-md shadow-sm p-4 flex flex-col items-center hover:shadow-md transition"
           >
-            <Users className="h-12 w-12 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Admin Dashboard</h3>
-            <p className="text-orange-100">Manage approvals and analytics</p>
+            <Users className="h-8 w-8 text-white mb-2" />
+            <span className="font-semibold text-base">Admin Dashboard</span>
+            <span className="text-xs text-purple-100 mt-1">Manage approvals</span>
           </button>
         )}
       </div>
@@ -428,7 +453,7 @@ const TurnifyPortal = () => {
         </div>
         <div className="p-6">
           <div className="space-y-4">
-            {sampleReturns.slice(0, 3).map(returnItem => (
+            {returnsData.slice(0, 3).map(returnItem => (
               <div key={returnItem.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
                 <div className="flex items-center space-x-4">
                   <div className={`p-2 rounded-full ${
@@ -529,142 +554,78 @@ const TurnifyPortal = () => {
         <p className="text-sm text-gray-600">Search for items by SKU regardless of order date</p>
       </div>
 
-      {/* Open RA Option */}
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="font-semibold text-yellow-800">Return Without Original Order</h3>
-            <p className="text-sm text-yellow-700">Create an "Open RA" for items without a specific order reference</p>
-          </div>
-          <button
-            onClick={() => setOpenRA(!openRA)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium ${
-              openRA 
-                ? 'bg-yellow-600 text-white' 
-                : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
-            }`}
-          >
-            {openRA ? 'Open RA Mode' : 'Create Open RA'}
-          </button>
-        </div>
-      </div>
-
       {/* Order Selection */}
-      {!openRA && (
-        <div className="bg-white rounded-lg shadow">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-900">Your Orders</h2>
-          </div>
-          <div className="p-6">
-            <div className="space-y-6">
-              {sampleOrders.map(order => (
-                <div key={order.id} className="border border-gray-200 rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <h3 className="font-semibold">{order.po_number}</h3>
-                      <p className="text-sm text-gray-600">{order.order_date} • ${order.total.toLocaleString()}</p>
-                    </div>
-                    <button 
-                      onClick={() => {
-                        const allItems = order.items.map(item => ({
-                          ...item,
-                          po_number: order.po_number,
-                          return_qty: item.available_return,
-                          reason: ''
-                        }));
-                        setSelectedItems(allItems);
-                      }}
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm"
-                    >
-                      Select All Items
-                    </button>
+      <div className="bg-white rounded-lg shadow">
+        <div className="p-6 border-b border-gray-200">
+          <h2 className="text-xl font-semibold text-gray-900">Your Orders</h2>
+        </div>
+        <div className="p-6">
+          <div className="space-y-6">
+            {sampleOrders.map(order => (
+              <div key={order.id} className="border border-gray-200 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="font-semibold">{order.po_number}</h3>
+                    <p className="text-sm text-gray-600">{order.order_date} • ${order.total.toLocaleString()}</p>
                   </div>
-                  
-                  <div className="space-y-3">
-                    {order.items.map((item, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-4">
-                            <input
-                              type="checkbox"
-                              checked={selectedItems.some(selected => selected.sku === item.sku && selected.po_number === order.po_number)}
-                              onChange={(e) => {
-                                if (e.target.checked) {
-                                  setSelectedItems([...selectedItems, {
-                                    ...item,
-                                    po_number: order.po_number,
-                                    return_qty: item.available_return,
-                                    reason: ''
-                                  }]);
-                                } else {
-                                  setSelectedItems(selectedItems.filter(selected => 
-                                    !(selected.sku === item.sku && selected.po_number === order.po_number)
-                                  ));
-                                }
-                              }}
-                              className="h-4 w-4 text-blue-600"
-                            />
-                            <div>
-                              <p className="font-medium">{item.title}</p>
-                              <p className="text-sm text-gray-600">SKU: {item.sku} • Qty: {item.qty} • Available: {item.available_return}</p>
-                            </div>
+                  <button 
+                    onClick={() => {
+                      const allItems = order.items.map(item => ({
+                        ...item,
+                        po_number: order.po_number,
+                        return_qty: item.available_return,
+                        reason: ''
+                      }));
+                      setSelectedItems(allItems);
+                    }}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm"
+                  >
+                    Select All Items
+                  </button>
+                </div>
+                
+                <div className="space-y-3">
+                  {order.items.map((item, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-4">
+                          <input
+                            type="checkbox"
+                            checked={selectedItems.some(selected => selected.sku === item.sku && selected.po_number === order.po_number)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedItems([...selectedItems, {
+                                  ...item,
+                                  po_number: order.po_number,
+                                  return_qty: item.available_return,
+                                  reason: ''
+                                }]);
+                              } else {
+                                setSelectedItems(selectedItems.filter(selected => 
+                                  !(selected.sku === item.sku && selected.po_number === order.po_number)
+                                ));
+                              }
+                            }}
+                            className="h-4 w-4 text-blue-600"
+                          />
+                          <div>
+                            <p className="font-medium">{item.title}</p>
+                            <p className="text-sm text-gray-600">SKU: {item.sku} • Qty: {item.qty} • Available: {item.available_return}</p>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <p className="font-medium">${item.price}</p>
-                          <p className="text-sm text-gray-600">Available: {item.available_return}</p>
-                        </div>
                       </div>
-                    ))}
-                  </div>
+                      <div className="text-right">
+                        <p className="font-medium">${item.price}</p>
+                        <p className="text-sm text-gray-600">Available: {item.available_return}</p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         </div>
-      )}
-
-      {/* Open RA Form */}
-      {openRA && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">Open RA - Return Without Order</h2>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Product Identifier</label>
-              <select className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="sku">SKU</option>
-                <option value="upc">UPC</option>
-                <option value="ean">EAN</option>
-                <option value="custom">Custom ID</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Product ID</label>
-              <input
-                type="text"
-                placeholder="Enter product identifier..."
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Quantity</label>
-              <input
-                type="number"
-                min="1"
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Return Reason</label>
-              <select className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                {customReturnReasons.map(reason => (
-                  <option key={reason} value={reason}>{reason}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-        </div>
-      )}
+      </div>
 
       {selectedItems.length > 0 && (
         <div className="fixed bottom-6 right-6">
@@ -680,6 +641,124 @@ const TurnifyPortal = () => {
     </div>
   );
 
+  // Open RA Page
+  const OpenRAPage = () => {
+    const handleSubmit = () => {
+      if (!openRAForm.productId || !openRAForm.reason) {
+        alert('Please fill in all required fields');
+        return;
+      }
+
+      // Create Open RA item and add to selected items
+      const openRAItem = {
+        sku: openRAForm.productId,
+        title: `Open RA - ${openRAForm.productId}`,
+        qty: openRAForm.quantity,
+        price: 0, // Will be determined by system
+        available_return: openRAForm.quantity,
+        po_number: 'OPEN-RA',
+        return_qty: openRAForm.quantity,
+        reason: openRAForm.reason,
+        isOpenRA: true
+      };
+
+      setSelectedItems([openRAItem]);
+      navigate('return-details');
+    };
+
+    return (
+      <div className="max-w-4xl mx-auto p-6">
+        <div className="mb-6">
+          <button 
+            onClick={() => navigate('landing')}
+            className="flex items-center text-blue-600 hover:text-blue-800 mb-4"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Dashboard
+          </button>
+          <h1 className="text-3xl font-bold text-gray-900">Return Without Original Order</h1>
+          <p className="text-gray-600 mt-2">Create an Open RA for items without a specific order reference</p>
+        </div>
+
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+          <h3 className="font-semibold text-yellow-800 mb-2">When to use Open RA:</h3>
+          <ul className="text-sm text-yellow-700 space-y-1">
+            <li>• Items received without a purchase order</li>
+            <li>• Long-tail returns from old orders</li>
+            <li>• Items with missing or incorrect order references</li>
+            <li>• Special circumstances requiring manual processing</li>
+          </ul>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-xl font-semibold mb-4">Open RA Details</h2>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Product Identifier Type *</label>
+              <select 
+                value={openRAForm.identifierType}
+                onChange={(e) => setOpenRAForm({...openRAForm, identifierType: e.target.value})}
+                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="upc">UPC</option>
+                <option value="ean">EAN</option>
+                <option value="custom">Custom ID</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Product ID *</label>
+              <input
+                type="text"
+                placeholder={`Enter ${openRAForm.identifierType.toUpperCase()}...`}
+                value={openRAForm.productId}
+                onChange={(e) => setOpenRAForm({...openRAForm, productId: e.target.value})}
+                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Quantity *</label>
+              <input
+                type="number"
+                min="1"
+                value={openRAForm.quantity}
+                onChange={(e) => setOpenRAForm({...openRAForm, quantity: parseInt(e.target.value) || 1})}
+                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Return Reason *</label>
+              <select 
+                value={openRAForm.reason}
+                onChange={(e) => setOpenRAForm({...openRAForm, reason: e.target.value})}
+                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Select a reason</option>
+                {customReturnReasons.map(reason => (
+                  <option key={reason} value={reason}>{reason}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="mt-6 flex justify-end space-x-4">
+            <button 
+              onClick={() => navigate('landing')}
+              className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button 
+              onClick={handleSubmit}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg"
+            >
+              Continue to Return Details
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // Return Details Page
   const ReturnDetailsPage = () => {
     const [returnReasons, setReturnReasons] = useState<Record<string, string>>({});
@@ -690,11 +769,11 @@ const TurnifyPortal = () => {
       <div className="max-w-4xl mx-auto p-6">
         <div className="mb-6">
           <button 
-            onClick={() => navigate('item-selection')}
+            onClick={() => navigate(selectedItems[0]?.isOpenRA ? 'open-ra' : 'item-selection')}
             className="flex items-center text-blue-600 hover:text-blue-800 mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Item Selection
+            Back to {selectedItems[0]?.isOpenRA ? 'Open RA' : 'Item Selection'}
           </button>
           <h1 className="text-3xl font-bold text-gray-900">Return Details</h1>
           <p className="text-gray-600 mt-2">Provide details for your return request</p>
@@ -710,6 +789,19 @@ const TurnifyPortal = () => {
             Turnify's configurable workflow will evaluate your return based on quantity, value, customer profile, and custom criteria.
           </p>
         </div>
+
+        {/* Open RA Notice */}
+        {selectedItems[0]?.isOpenRA && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+            <h3 className="font-semibold text-yellow-800 mb-2 flex items-center">
+              <span className="mr-2">📋</span>
+              Open RA Return
+            </h3>
+            <p className="text-sm text-yellow-700">
+              This is an Open RA return that will be manually reviewed by our team. Additional verification may be required.
+            </p>
+          </div>
+        )}
 
         {/* Shipping Preferences */}
         <div className="bg-white rounded-lg shadow p-6 mb-6">
@@ -769,10 +861,12 @@ const TurnifyPortal = () => {
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <h3 className="font-medium">{item.title}</h3>
-                    <p className="text-sm text-gray-600">SKU: {item.sku} • PO: {item.po_number}</p>
+                    <p className="text-sm text-gray-600">
+                      {item.isOpenRA ? `Open RA - ${item.sku}` : `SKU: ${item.sku} • PO: ${item.po_number}`}
+                    </p>
                   </div>
                   <div className="text-right">
-                    <p className="font-medium">${item.price}</p>
+                    <p className="font-medium">${item.price || 'TBD'}</p>
                     <p className="text-sm text-gray-600">Available: {item.available_return}</p>
                   </div>
                 </div>
@@ -784,7 +878,7 @@ const TurnifyPortal = () => {
                       type="number"
                       min="1"
                       max={item.available_return}
-                      value={returnQuantities[item.sku] || 1}
+                      value={returnQuantities[item.sku] || item.return_qty || 1}
                       onChange={(e) => setReturnQuantities({
                         ...returnQuantities,
                         [item.sku]: parseInt(e.target.value)
@@ -795,7 +889,7 @@ const TurnifyPortal = () => {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Return Reason</label>
                     <select
-                      value={returnReasons[item.sku] || ''}
+                      value={returnReasons[item.sku] || item.reason || ''}
                       onChange={(e) => setReturnReasons({
                         ...returnReasons,
                         [item.sku]: e.target.value
@@ -816,7 +910,7 @@ const TurnifyPortal = () => {
 
         <div className="mt-6 flex justify-end space-x-4">
           <button 
-            onClick={() => navigate('item-selection')}
+            onClick={() => navigate(selectedItems[0]?.isOpenRA ? 'open-ra' : 'item-selection')}
             className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50"
           >
             Back
@@ -834,31 +928,225 @@ const TurnifyPortal = () => {
 
   // Approval Check Page
   const ApprovalCheckPage = () => {
-    const needsApproval = true; // Deterministic value instead of Math.random() > 0.5
-    
+    const [isChecking, setIsChecking] = useState(true);
+    const [approvalStatus, setApprovalStatus] = useState<'pending' | 'approved' | 'rejected' | null>(null);
+    const [aiRecommendation, setAiRecommendation] = useState('');
+
     useEffect(() => {
-      // Simulate processing delay
+      // Simulate approval check with AI analysis
       const timer = setTimeout(() => {
-        if (needsApproval) {
-          navigate('approval-pending');
+        setIsChecking(false);
+        
+        // AI recommendation logic
+        const totalValue = selectedItems.reduce((sum, item) => sum + ((item.price || 0) * (returnQuantities[item.sku] || item.return_qty || 1)), 0);
+        const hasOpenRA = selectedItems.some(item => item.isOpenRA);
+        
+        if (hasOpenRA) {
+          setApprovalStatus('pending');
+          setAiRecommendation('Open RA returns require manual review. Our team will contact you within 24 hours.');
+        } else if (totalValue > 1000) {
+          setApprovalStatus('pending');
+          setAiRecommendation('High-value return detected. Manual approval required for amounts over $1,000.');
+        } else if (totalValue > 500) {
+          setApprovalStatus('approved');
+          setAiRecommendation('Return approved with standard processing. Shipping label will be generated.');
         } else {
-          navigate('confirmation');
+          setApprovalStatus('approved');
+          setAiRecommendation('Quick approval granted. Return meets all criteria for immediate processing.');
         }
+
+        // Create new return record
+        const newReturn: ReturnData = {
+          id: Date.now(), // Use timestamp as unique ID
+          rma_number: `RMA-${new Date().getFullYear()}-${String(returnsData.length + 1).padStart(3, '0')}`,
+          po_number: selectedItems[0]?.isOpenRA ? 'OPEN-RA' : selectedItems[0]?.po_number || 'N/A',
+          status: hasOpenRA || totalValue > 1000 ? 'pending' : 'approved',
+          created_at: new Date().toISOString().split('T')[0],
+          total_value: totalValue,
+          items: selectedItems.map(item => ({
+            sku: item.sku,
+            title: item.title,
+            qty: returnQuantities[item.sku] || item.return_qty || 1,
+            reason: returnReasons[item.sku] || item.reason || 'Not specified'
+          })),
+          approval_needed: hasOpenRA || totalValue > 1000,
+          approver: hasOpenRA || totalValue > 1000 ? null : 'Auto-approved',
+          tracking_number: hasOpenRA || totalValue > 1000 ? null : `1Z999AA${Date.now().toString().slice(-10)}`
+        };
+
+        // Add the new return to the system
+        addNewReturn(newReturn);
       }, 2000);
-      
+
       return () => clearTimeout(timer);
-    }, [needsApproval]);
+    }, []);
 
     return (
-      <div className="max-w-2xl mx-auto p-6">
-        <div className="bg-white rounded-lg shadow p-8 text-center">
-          <div className="animate-spin h-12 w-12 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-6"></div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Processing Your Return Request</h2>
-          <p className="text-gray-600 mb-4">Our AI system is analyzing your return request...</p>
-          <div className="bg-blue-100 p-4 rounded-lg mb-4 flex items-center">
-            <span className="mr-2">⚙️</span>
-            <span className="font-semibold text-blue-800">AI is analyzing your return for risk, eligibility, and policy compliance.</span>
+      <div className="max-w-4xl mx-auto p-6">
+        <div className="mb-6">
+          <button 
+            onClick={() => navigate('return-details')}
+            className="flex items-center text-blue-600 hover:text-blue-800 mb-4"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Return Details
+          </button>
+          <h1 className="text-3xl font-bold text-gray-900">Return Approval Check</h1>
+          <p className="text-gray-600 mt-2">Turnify AI is analyzing your return request</p>
+        </div>
+
+        {isChecking ? (
+          <div className="bg-white rounded-lg shadow p-8 text-center">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <h2 className="text-xl font-semibold mb-2">Analyzing Return Request</h2>
+            <p className="text-gray-600">Turnify AI is evaluating your return against our policies...</p>
+            
+            <div className="mt-6 space-y-2 text-sm text-gray-500">
+              <div className="flex items-center justify-center">
+                <span className="mr-2">✓</span>
+                Checking return eligibility
+              </div>
+              <div className="flex items-center justify-center">
+                <span className="mr-2">✓</span>
+                Validating product information
+              </div>
+              <div className="flex items-center justify-center">
+                <span className="mr-2">✓</span>
+                Reviewing customer history
+              </div>
+              <div className="flex items-center justify-center">
+                <span className="mr-2">✓</span>
+                Applying custom approval logic
+              </div>
+            </div>
           </div>
+        ) : (
+          <div className="space-y-6">
+            {/* AI Recommendation */}
+            <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-6">
+              <h3 className="font-semibold text-blue-800 mb-2 flex items-center">
+                <span className="mr-2">🤖</span>
+                AI Recommendation
+              </h3>
+              <p className="text-blue-700">{aiRecommendation}</p>
+            </div>
+
+            {/* Approval Status */}
+            <div className={`rounded-lg p-6 ${
+              approvalStatus === 'approved' ? 'bg-green-50 border border-green-200' :
+              approvalStatus === 'rejected' ? 'bg-red-50 border border-red-200' :
+              'bg-yellow-50 border border-yellow-200'
+            }`}>
+              <div className="flex items-center mb-4">
+                {approvalStatus === 'approved' && (
+                  <CheckCircle className="h-8 w-8 text-green-600 mr-3" />
+                )}
+                {approvalStatus === 'rejected' && (
+                  <XCircle className="h-8 w-8 text-red-600 mr-3" />
+                )}
+                {approvalStatus === 'pending' && (
+                  <Clock className="h-8 w-8 text-yellow-600 mr-3" />
+                )}
+                <div>
+                  <h2 className="text-xl font-semibold">
+                    {approvalStatus === 'approved' ? 'Return Approved' :
+                     approvalStatus === 'rejected' ? 'Return Rejected' :
+                     'Manual Review Required'}
+                  </h2>
+                  <p className="text-sm text-gray-600">
+                    {approvalStatus === 'approved' ? 'Your return has been approved and is being processed' :
+                     approvalStatus === 'rejected' ? 'Your return request has been rejected' :
+                     'Your return requires manual review by our team'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Open RA Specific Notice */}
+              {selectedItems.some(item => item.isOpenRA) && (
+                <div className="bg-yellow-100 border border-yellow-300 rounded-lg p-4 mb-4">
+                  <h4 className="font-semibold text-yellow-800 mb-2">Open RA Processing</h4>
+                  <ul className="text-sm text-yellow-700 space-y-1">
+                    <li>• Manual verification of product details required</li>
+                    <li>• Price validation needed</li>
+                    <li>• Expected processing time: 24-48 hours</li>
+                    <li>• You will receive an email with next steps</li>
+                  </ul>
+                </div>
+              )}
+
+              {/* Next Steps */}
+              <div className="mt-4">
+                <h4 className="font-semibold mb-2">Next Steps:</h4>
+                <ul className="text-sm space-y-1">
+                  {approvalStatus === 'approved' && (
+                    <>
+                      <li>• Shipping label will be emailed within 1 hour</li>
+                      <li>• Package your items securely</li>
+                      <li>• Drop off at any authorized carrier location</li>
+                      <li>• Track your return in the portal</li>
+                    </>
+                  )}
+                  {approvalStatus === 'pending' && (
+                    <>
+                      <li>• Our team will review your return within 24 hours</li>
+                      <li>• You'll receive an email with the decision</li>
+                      <li>• Check your email for updates</li>
+                      <li>• Contact support if you have questions</li>
+                    </>
+                  )}
+                  {approvalStatus === 'rejected' && (
+                    <>
+                      <li>• Review the rejection reason</li>
+                      <li>• Contact support for clarification</li>
+                      <li>• Consider alternative return options</li>
+                    </>
+                  )}
+                </ul>
+              </div>
+            </div>
+
+            {/* Return Summary */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-lg font-semibold mb-4">Return Summary</h3>
+              <div className="space-y-3">
+                {selectedItems.map((item, index) => (
+                  <div key={index} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-b-0">
+                    <div>
+                      <p className="font-medium">{item.title}</p>
+                      <p className="text-sm text-gray-600">
+                        {item.isOpenRA ? `Open RA - ${item.sku}` : `SKU: ${item.sku}`}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium">
+                        Qty: {returnQuantities[item.sku] || item.return_qty || 1}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        ${item.price || 'TBD'} each
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="mt-6 flex justify-end space-x-4">
+          <button 
+            onClick={() => navigate('return-details')}
+            className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50"
+          >
+            Back
+          </button>
+          {!isChecking && (
+            <button 
+              onClick={() => navigate('landing')}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg"
+            >
+              Return to Dashboard
+            </button>
+          )}
         </div>
       </div>
     );
@@ -970,7 +1258,7 @@ const TurnifyPortal = () => {
 
   // Returns List Page
   const ReturnsListPage = () => {
-    const filteredReturns = sampleReturns.filter(returnItem => {
+    const filteredReturns = returnsData.filter(returnItem => {
       const matchesSearch = returnItem.rma_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            returnItem.po_number.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesFilter = filterStatus === 'all' || returnItem.status === filterStatus;
@@ -1127,11 +1415,11 @@ const TurnifyPortal = () => {
         <div className="p-6 border-b border-gray-200">
           <h2 className="text-xl font-semibold flex items-center">
             <AlertTriangle className="h-5 w-5 text-orange-500 mr-2" />
-            Pending Approvals ({sampleReturns.filter(r => r.status === 'pending').length})
+            Pending Approvals ({returnsData.filter(r => r.status === 'pending').length})
           </h2>
         </div>
         <div className="divide-y divide-gray-200">
-          {sampleReturns.filter(r => r.status === 'pending').map(returnItem => (
+          {returnsData.filter(r => r.status === 'pending').map(returnItem => (
             <div key={returnItem.id} className="p-6">
               <div className="flex justify-between items-start mb-4">
                 <div>
@@ -1300,7 +1588,7 @@ const TurnifyPortal = () => {
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-xl font-semibold mb-4">Return Items</h2>
             <div className="space-y-4">
-              {(selectedReturn.items || sampleReturns[0].items).map((item, index) => (
+              {(selectedReturn.items || returnsData[0]?.items || []).map((item, index) => (
                 <div key={index} className="border border-gray-200 rounded-lg p-4">
                   <div className="flex justify-between items-start">
                     <div>
@@ -1389,6 +1677,8 @@ const TurnifyPortal = () => {
         return <LandingPage />;
       case 'item-selection':
         return <ItemSelectionPage />;
+      case 'open-ra':
+        return <OpenRAPage />;
       case 'return-details':
         return <ReturnDetailsPage />;
       case 'approval-check':
