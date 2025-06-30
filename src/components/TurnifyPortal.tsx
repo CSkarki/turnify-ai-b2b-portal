@@ -375,8 +375,8 @@ interface ItemSelectionPageProps {
 const ItemSelectionPage: React.FC<ItemSelectionPageProps> = ({ navigate, selectedItems, setSelectedItems, sampleOrders }) => {
   const [searchBySKU, setSearchBySKU] = React.useState('');
   const [filteredOrders, setFilteredOrders] = React.useState(sampleOrders);
+  const [expandedPOs, setExpandedPOs] = React.useState<Record<string, boolean>>({});
 
-  // Update filteredOrders when sampleOrders changes
   React.useEffect(() => {
     setFilteredOrders(sampleOrders);
   }, [sampleOrders]);
@@ -428,6 +428,10 @@ const ItemSelectionPage: React.FC<ItemSelectionPageProps> = ({ navigate, selecte
     navigate('return-details');
   }, [navigate]);
 
+  const toggleExpand = (poNumber: string) => {
+    setExpandedPOs(prev => ({ ...prev, [poNumber]: !prev[poNumber] }));
+  };
+
   return (
     <div className="max-w-7xl mx-auto p-6">
       <div className="mb-6">
@@ -464,24 +468,83 @@ const ItemSelectionPage: React.FC<ItemSelectionPageProps> = ({ navigate, selecte
         </div>
         <p className="text-sm text-gray-600">Search for items by SKU or Order Number regardless of order date</p>
       </div>
-      {/* Order Selection */}
-      <div className="bg-white rounded-lg shadow">
-        <div className="p-6 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-900">Your Orders</h2>
-        </div>
-        <div className="p-6">
-          <div className="space-y-6">
-            {filteredOrders.map(order => (
-              <OrderSection
-                key={order.id}
-                order={order}
-                selectedItems={selectedItems}
-                onToggleItem={handleToggleItem}
-                onSelectAllItems={handleSelectAllItems}
-              />
-            ))}
-          </div>
-        </div>
+      {/* Table View with Scrollbars */}
+      <div className="bg-white rounded-lg shadow overflow-x-auto overflow-y-auto max-h-[500px]">
+        <table className="min-w-full text-sm">
+          <thead className="sticky top-0 bg-gray-100 z-10">
+            <tr>
+              <th className="px-4 py-2 text-left">PO Number</th>
+              <th className="px-4 py-2 text-left">Order Date</th>
+              <th className="px-4 py-2 text-left">Total</th>
+              <th className="px-4 py-2 text-left">Line Items</th>
+              <th className="px-4 py-2 text-left">Select All</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredOrders.map((order: any) => {
+              const anySelected = order.items.some((item: any) =>
+                selectedItems.some((selected: ReturnItem) => selected.sku === item.sku && selected.po_number === order.po_number)
+              );
+              const allSelected = order.items.every((item: any) =>
+                selectedItems.some((selected: ReturnItem) => selected.sku === item.sku && selected.po_number === order.po_number)
+              );
+              const handleSelectOrUnselectAll = () => {
+                if (anySelected) {
+                  // Unselect all items for this PO
+                  setSelectedItems(prev => prev.filter(selected => selected.po_number !== order.po_number));
+                } else {
+                  // Select all items for this PO
+                  handleSelectAllItems(order.items.map((item: any) => ({ ...item, po_number: order.po_number, return_qty: item.available_return, reason: '' })));
+                }
+              };
+              return (
+                <React.Fragment key={order.id}>
+                  <tr className={`border-b ${anySelected ? 'bg-blue-50' : ''}`}>
+                    <td className="px-4 py-2 font-semibold">
+                      <button onClick={() => toggleExpand(order.po_number)} className="text-blue-600 hover:underline mr-2">
+                        {expandedPOs[order.po_number] ? '-' : '+'}
+                      </button>
+                      {order.po_number}
+                    </td>
+                    <td className="px-4 py-2">{order.order_date}</td>
+                    <td className="px-4 py-2">${order.total.toLocaleString()}</td>
+                    <td className="px-4 py-2">{order.items.length} items</td>
+                    <td className="px-4 py-2">
+                      <button 
+                        onClick={handleSelectOrUnselectAll}
+                        className={`px-3 py-1 rounded text-xs ${anySelected ? 'bg-gray-300 text-gray-800 hover:bg-gray-400' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+                      >
+                        {anySelected ? 'Unselect All Items' : 'Select All Items'}
+                      </button>
+                    </td>
+                  </tr>
+                  {expandedPOs[order.po_number] && order.items.map((item: any, idx: number) => {
+                    const isSelected = selectedItems.some(
+                      (selected: ReturnItem) => selected.sku === item.sku && selected.po_number === order.po_number
+                    );
+                    return (
+                      <tr key={item.sku + '-' + idx} className="bg-gray-50 border-b">
+                        <td className="px-8 py-2" colSpan={1}>
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={e => handleToggleItem(e.target.checked, item, order.po_number)}
+                            className="h-4 w-4 text-blue-600 mr-2"
+                          />
+                          <span className="font-medium">{item.title}</span>
+                        </td>
+                        <td className="px-4 py-2">SKU: {item.sku}</td>
+                        <td className="px-4 py-2">Qty: {item.qty}</td>
+                        <td className="px-4 py-2">Available: {item.available_return}</td>
+                        <td className="px-4 py-2">${item.price}</td>
+                      </tr>
+                    );
+                  })}
+                </React.Fragment>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
       {selectedItems.length > 0 && (
         <div className="fixed bottom-6 right-6">
@@ -625,7 +688,7 @@ const TurnifyPortal = () => {
       'Damaged': '#f87171',
       'Other': '#60a5fa',
     };
-    let reasonCounts = { 'Quality Issue': 0, 'Wrong Item': 0, 'Damaged': 0, 'Other': 0 };
+    let reasonCounts = { 'Quality Issue': 12, 'Wrong Item': 5, 'Damaged': 0, 'Other': 20 };
     returnsData.forEach(r => r.items.forEach(item => {
       if (item.reason === 'Quality Issue') reasonCounts['Quality Issue']++;
       else if (item.reason === 'Wrong Item Received' || item.reason === 'Wrong Item') reasonCounts['Wrong Item']++;
@@ -633,8 +696,15 @@ const TurnifyPortal = () => {
       else reasonCounts['Other']++;
     }));
     const allZero = Object.values(reasonCounts).every(v => v === 0);
+    const nonZeroReasons = Object.entries(reasonCounts).filter(([_, v]) => v > 0);
     if (allZero) {
       reasonCounts = { 'Quality Issue': 12, 'Wrong Item': 10, 'Damaged': 8, 'Other': 20 };
+    }
+    // If only one reason is nonzero, add a tiny contrasting slice for visual clarity
+    if (!allZero && nonZeroReasons.length === 1) {
+      const mainKey = nonZeroReasons[0][0];
+      const otherKey = Object.keys(reasonCounts).find(k => k !== mainKey)!;
+      reasonCounts = { ...reasonCounts, [otherKey]: 0.01 };
     }
     const totalReasons = Object.values(reasonCounts).reduce((a, b) => a + b, 0) || 1;
     let startAngle = 0;
@@ -642,6 +712,7 @@ const TurnifyPortal = () => {
     const cx = 16, cy = 16;
     const piePaths = Object.entries(reasonCounts).map(([reason, count]) => {
       const angle = (count / totalReasons) * 360;
+      if (angle === 0) return null;
       const endAngle = startAngle + angle;
       const large = angle > 180 ? 1 : 0;
       const x1 = cx + radius * Math.cos((Math.PI * startAngle) / 180);

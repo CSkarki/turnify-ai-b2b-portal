@@ -18,6 +18,7 @@ interface OpenRAForm {
   productId: string;
   quantity: number;
   reason: string;
+  comment?: string;
 }
 
 interface TurnifyOpenRAProps {
@@ -88,7 +89,6 @@ export const TurnifyOpenRA: React.FC<TurnifyOpenRAProps> = ({ navigate, openRAFo
               onChange={handleInputChange}
               className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="sku">SKU</option>
               <option value="upc">UPC</option>
               <option value="ean">EAN</option>
               <option value="custom">Custom ID</option>
@@ -134,6 +134,19 @@ export const TurnifyOpenRA: React.FC<TurnifyOpenRAProps> = ({ navigate, openRAFo
               <option value="Other">Other</option>
             </select>
           </div>
+          {openRAForm.reason && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Comments</label>
+              <textarea
+                name="comment"
+                value={openRAForm.comment || ''}
+                onChange={e => setOpenRAForm(prev => ({ ...prev, comment: e.target.value }))}
+                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Add additional details (optional)"
+                rows={2}
+              />
+            </div>
+          )}
         </div>
         <div className="mt-6 flex justify-end space-x-4">
           <button 
