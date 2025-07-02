@@ -1038,7 +1038,7 @@ const TurnifyPortal = () => {
                 <li>Real-time AI status updates and explanations</li>
                 <li>Seamless SAP S/4 HANA integration</li>
                 <li>Configurable approval workflows and custom logic</li>
-                <li>Flexible product identifier support (SKU, UPC, EAN)</li>
+                <li>Flexible product identifier support (UPC, EAN)</li>
               </ul>
               <button
                 className="ml-2 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded hover:bg-blue-200 transition mt-4"

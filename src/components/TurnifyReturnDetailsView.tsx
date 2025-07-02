@@ -1,26 +1,6 @@
 import React from 'react';
 import { ArrowLeft, CheckCircle, Truck, Download } from 'lucide-react';
-
-interface ReturnItem {
-  sku: string;
-  title: string;
-  qty: number;
-  reason: string;
-  comment?: string;
-}
-
-interface ReturnData {
-  id: number;
-  rma_number: string;
-  po_number: string;
-  status: string;
-  created_at: string;
-  total_value: number;
-  items: ReturnItem[];
-  approval_needed: boolean;
-  approver?: string | null;
-  tracking_number?: string | null;
-}
+import type { ReturnItem, ReturnData } from '../types';
 
 interface TurnifyReturnDetailsViewProps {
   selectedReturn: ReturnData;
@@ -74,11 +54,11 @@ export const TurnifyReturnDetailsView: React.FC<TurnifyReturnDetailsViewProps> =
           <h2 className="text-xl font-semibold mb-4">Return Items</h2>
           <div className="space-y-4">
             {(selectedReturn.items || returnsData[0]?.items || []).map((item, index) => (
-              <div key={item.sku + '_' + index} className="border border-gray-200 rounded-lg p-4">
+              <div key={item.upc + '_' + index} className="border border-gray-200 rounded-lg p-4">
                 <div className="flex justify-between items-start">
                   <div>
                     <h3 className="font-medium">{item.title}</h3>
-                    <p className="text-sm text-gray-600">SKU: {item.sku}</p>
+                    <p className="text-sm text-gray-600">UPC: {item.upc}</p>
                     <p className="text-sm text-gray-600">Reason: {item.reason}</p>
                     {'comment' in item && (item as any).comment && (
                       <p className="text-sm text-gray-500 italic">Comment: {(item as any).comment}</p>

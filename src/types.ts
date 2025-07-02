@@ -9,6 +9,7 @@ export interface ReturnItem {
   reason?: string;  // Make this optional to match your usage
   comment?: string;
   isOpenRA?: boolean;
+  sku?: string; // Add this line with optional modifier
 }
 
 export interface ReturnData {
