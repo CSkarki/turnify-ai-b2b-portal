@@ -1,17 +1,6 @@
 import React from 'react';
 import { ArrowLeft } from 'lucide-react';
-
-export interface ReturnItem {
-  sku: string;
-  title: string;
-  qty: number;
-  price?: number;
-  available_return?: number;
-  po_number?: string;
-  return_qty?: number;
-  reason?: string;
-  isOpenRA?: boolean;
-}
+import type { ReturnItem } from '../types';
 
 interface OpenRAForm {
   identifierType: string;
@@ -40,9 +29,16 @@ export const TurnifyOpenRA: React.FC<TurnifyOpenRAProps> = ({ navigate, openRAFo
       alert('Please fill in all required fields');
       return;
     }
+    
+    // Check if "Other" reason is selected but no comment provided
+    if (openRAForm.reason === 'Other' && !openRAForm.comment?.trim()) {
+      alert('Comments are required when return reason is "Other". Please provide details.');
+      return;
+    }
+    
     // Create Open RA item and add to selected items
     const openRAItem: ReturnItem = {
-      sku: openRAForm.productId,
+      upc: openRAForm.productId,
       title: `Open RA - ${openRAForm.productId}`,
       qty: openRAForm.quantity,
       price: 0, // Will be determined by system
@@ -99,7 +95,7 @@ export const TurnifyOpenRA: React.FC<TurnifyOpenRAProps> = ({ navigate, openRAFo
             <input
               type="text"
               name="productId"
-              placeholder={`Enter ${openRAForm.identifierType.toUpperCase()}...`}
+              placeholder={`Enter  ${openRAForm.identifierType.toUpperCase()}...`}
               value={openRAForm.productId}
               onChange={handleInputChange}
               className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -136,15 +132,29 @@ export const TurnifyOpenRA: React.FC<TurnifyOpenRAProps> = ({ navigate, openRAFo
           </div>
           {openRAForm.reason && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Comments</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Comments{openRAForm.reason === 'Other' ? ' *' : ''}
+              </label>
               <textarea
                 name="comment"
                 value={openRAForm.comment || ''}
                 onChange={e => setOpenRAForm(prev => ({ ...prev, comment: e.target.value }))}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Add additional details (optional)"
+                className={`w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  openRAForm.reason === 'Other' && !openRAForm.comment?.trim() 
+                    ? 'border-red-300 focus:ring-red-500' 
+                    : 'border-gray-300'
+                }`}
+                placeholder={
+                  openRAForm.reason === 'Other' 
+                    ? "Comments are required for 'Other' reason *" 
+                    : "Add additional details (optional)"
+                }
                 rows={2}
+                required={openRAForm.reason === 'Other'}
               />
+              {openRAForm.reason === 'Other' && !openRAForm.comment?.trim() && (
+                <p className="text-red-500 text-xs mt-1">Comments are required when reason is "Other"</p>
+              )}
             </div>
           )}
         </div>
