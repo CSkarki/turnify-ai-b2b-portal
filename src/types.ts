@@ -6,7 +6,8 @@ export interface ReturnItem {
   available_return?: number;
   po_number?: string;
   return_qty?: number;
-  reason?: string;
+  reason?: string;  // Make this optional to match your usage
+  comment?: string;
   isOpenRA?: boolean;
 }
 
@@ -17,14 +18,8 @@ export interface ReturnData {
   status: string;
   created_at: string;
   total_value: number;
-  items: {
-    upc: string;
-    title: string;
-    qty: number;
-    reason: string;
-    comment?: string;
-  }[];
+  items: ReturnItem[];  // ← Change this line
   approval_needed: boolean;
   approver?: string | null;
   tracking_number?: string | null;
-} 
+}
