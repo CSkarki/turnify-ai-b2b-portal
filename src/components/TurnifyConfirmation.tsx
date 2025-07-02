@@ -1,6 +1,6 @@
 import React from 'react';
 import { CheckCircle, Download } from 'lucide-react';
-import type { ReturnItem } from './TurnifyReturnDetails';
+import type { ReturnItem } from '../types';
 
 interface TurnifyConfirmationProps {
   navigate: (view: string) => void;
