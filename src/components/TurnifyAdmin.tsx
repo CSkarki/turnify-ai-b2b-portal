@@ -1,24 +1,6 @@
 import React from 'react';
 import { ArrowLeft, AlertTriangle, Check, X, CheckCircle } from 'lucide-react';
-
-interface ReturnData {
-  id: number;
-  rma_number: string;
-  po_number: string;
-  status: string;
-  created_at: string;
-  total_value: number;
-  items: {
-    sku: string;
-    title: string;
-    qty: number;
-    reason: string;
-    comment?: string;
-  }[];
-  approval_needed: boolean;
-  approver?: string | null;
-  tracking_number?: string | null;
-}
+import type { ReturnData, ReturnItem } from '../types';
 
 interface TurnifyAdminProps {
   returnsData: ReturnData[];
@@ -74,9 +56,9 @@ export const TurnifyAdmin: React.FC<TurnifyAdminProps> = ({ returnsData, navigat
             <div className="mt-4">
               <h4 className="font-semibold mb-2">Return Items</h4>
               <div className="space-y-2">
-                {returnItem.items.map((item: { sku: string; title: string; qty: number; reason: string; comment?: string }, index: number) => (
+                {returnItem.items.map((item: ReturnItem, index: number) => (
                   <div key={index} className="flex justify-between text-sm">
-                    <span>{item.title} (SKU: {item.sku})</span>
+                    <span>{item.title} (UPC: {item.upc})</span>
                     <span>Qty: {item.qty} • Reason: {item.reason}</span>
                   </div>
                 ))}

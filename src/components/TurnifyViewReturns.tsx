@@ -1,24 +1,6 @@
 import React from 'react';
 import { Search, CheckCircle, Clock, XCircle, Eye } from 'lucide-react';
-
-interface ReturnData {
-  id: number;
-  rma_number: string;
-  po_number: string;
-  status: string;
-  created_at: string;
-  total_value: number;
-  items: {
-    sku: string;
-    title: string;
-    qty: number;
-    reason: string;
-    comment?: string;
-  }[];
-  approval_needed: boolean;
-  approver?: string | null;
-  tracking_number?: string | null;
-}
+import type { ReturnData, ReturnItem } from '../types';
 
 interface TurnifyViewReturnsProps {
   searchTerm: string;
@@ -137,9 +119,9 @@ export const TurnifyViewReturns: React.FC<TurnifyViewReturnsProps> = React.memo(
               </div>
               <div className="flex justify-between items-center">
                 <div className="flex space-x-2">
-                  {returnItem.items.map((item: { sku: string; title: string; qty: number; reason: string; comment?: string }, index: number) => (
+                  {returnItem.items.map((item: { upc: string; title: string; qty: number; reason: string; comment?: string }, index: number) => (
                     <span key={index} className="px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded">
-                      {item.sku}
+                      {item.upc}
                     </span>
                   ))}
                 </div>

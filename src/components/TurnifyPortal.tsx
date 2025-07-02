@@ -29,7 +29,7 @@ import { TurnifyApprovalCheck } from './TurnifyApprovalCheck';
 import { TurnifyApprovalPending } from './TurnifyApprovalPending';
 import { TurnifyConfirmation } from './TurnifyConfirmation';
 import { TurnifyReturnDetailsView } from './TurnifyReturnDetailsView';
-import { ReturnItem, ReturnData } from '../types';
+import type { ReturnItem, ReturnData } from '../types';
 
 // Sample Data
 const initialOrders = [

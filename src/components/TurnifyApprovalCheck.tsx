@@ -1,36 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, CheckCircle, XCircle, Clock } from 'lucide-react';
-
-export interface ReturnItem {
-  sku: string;
-  title: string;
-  qty: number;
-  price?: number;
-  available_return?: number;
-  po_number?: string;
-  return_qty?: number;
-  reason?: string;
-  isOpenRA?: boolean;
-}
-
-export interface ReturnData {
-  id: number;
-  rma_number: string;
-  po_number: string;
-  status: string;
-  created_at: string;
-  total_value: number;
-  items: {
-    sku: string;
-    title: string;
-    qty: number;
-    reason: string;
-    comment?: string;
-  }[];
-  approval_needed: boolean;
-  approver?: string | null;
-  tracking_number?: string | null;
-}
+import type { ReturnItem, ReturnData } from '../types';
 
 interface TurnifyApprovalCheckProps {
   selectedItems: ReturnItem[];
@@ -50,7 +20,7 @@ export const TurnifyApprovalCheck: React.FC<TurnifyApprovalCheckProps> = ({ sele
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsChecking(false);
-      const totalValue = selectedItems.reduce((sum, item, index) => sum + ((item.price || 0) * (returnQuantities[`${item.sku}_${item.po_number || (item.isOpenRA ? 'OPEN-RA' : '')}_${index}`] || item.return_qty || 1)), 0);
+      const totalValue = selectedItems.reduce((sum, item, index) => sum + ((item.price || 0) * (returnQuantities[`${item.upc}_${item.po_number || (item.isOpenRA ? 'OPEN-RA' : '')}_${index}`] || item.return_qty || 1)), 0);
       const hasOpenRA = selectedItems.some(item => item.isOpenRA);
       if (hasOpenRA) {
         setApprovalStatus('pending');
@@ -73,9 +43,9 @@ export const TurnifyApprovalCheck: React.FC<TurnifyApprovalCheckProps> = ({ sele
         created_at: new Date().toISOString().split('T')[0],
         total_value: totalValue,
         items: selectedItems.map((item, index) => {
-          const itemKey = `${item.sku}_${item.po_number || (item.isOpenRA ? 'OPEN-RA' : '')}_${index}`;
+          const itemKey = `${item.upc}_${item.po_number || (item.isOpenRA ? 'OPEN-RA' : '')}_${index}`;
           return {
-            sku: item.sku,
+            upc: item.upc,
             title: item.title,
             qty: returnQuantities[itemKey] || item.return_qty || 1,
             reason: returnReasons[itemKey] || item.reason || 'Not specified',
@@ -159,7 +129,7 @@ export const TurnifyApprovalCheck: React.FC<TurnifyApprovalCheckProps> = ({ sele
                 <div key={index} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-b-0">
                   <div>
                     <p className="font-medium">{item.title}</p>
-                    <p className="text-sm text-gray-600">{item.isOpenRA ? `Open RA - ${item.sku}` : `SKU: ${item.sku}`}</p>
+                    <p className="text-sm text-gray-600">{item.isOpenRA ? `Open RA - ${item.upc}` : `UPC: ${item.upc}`}</p>
                   </div>
                   <div className="text-right">
                     <p className="font-medium">Qty: {item.return_qty || 1}</p>
