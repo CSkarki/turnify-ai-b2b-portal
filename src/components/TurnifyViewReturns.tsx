@@ -119,10 +119,12 @@ export const TurnifyViewReturns: React.FC<TurnifyViewReturnsProps> = React.memo(
               </div>
               <div className="flex justify-between items-center">
                 <div className="flex space-x-2">
-                  {returnItem.items.map((item: { upc: string; title: string; qty: number; reason: string; comment?: string }, index: number) => (
-                    <span key={index} className="px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded">
-                      {item.upc}
-                    </span>
+                  {returnItem.items.map((item: ReturnItem, index: number) => (
+                    <div key={index} className="flex justify-between text-sm">
+                      <span>{item.title} (UPC: {item.upc})</span>
+                      <span>{item.reason ?? 'No reason provided'}</span>
+                      {item.comment && <span className="italic text-gray-400 ml-2">{item.comment}</span>}
+                    </div>
                   ))}
                 </div>
                 <button 
