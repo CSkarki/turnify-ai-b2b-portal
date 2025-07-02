@@ -480,11 +480,11 @@ const ItemSelectionPage: React.FC<ItemSelectionPageProps> = ({
           poRefs.current[firstErrorPO]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
       }, 100);
-      alert(`Return Reason is required for all selected items. Please select a reason for:\n${itemsWithoutReason.map(item => `- ${item.title}`).join('\n')}`);
+      alert(`Return Reason is required for all selected items. Please select a reason for: \n${itemsWithoutReason.map(item => `- ${item.title}`).join('\n')}`);
       return;
     }
 
-    // Validation: Check if items with "Other" reason have comments
+    // Validation: Check if items with "Other" reason have comments ......
     const itemsWithOtherReasonWithoutComment = selectedItems.filter((item, index) => {
       const itemKey = getItemKey(item, item.po_number || '', index);
       const reason = returnReasons[itemKey] || '';
@@ -864,12 +864,12 @@ const TurnifyPortal = () => {
       { label: 'Shipped', color: 'bg-blue-400', count: returnsData.filter(r => r.status === 'shipped').length },
     ];
     const barChart = (
-      <div className="w-full h-36 flex items-end gap-6 justify-center">
+      <div className="w-full h-36 flex items-end gap-8 justify-center">
         {statusData.map(({ label, color, count }) => (
-          <div key={label} className="flex flex-col items-center w-16">
-            <span className="text-sm font-bold mb-1">{count}</span>
-            <div className={`${color} w-8 rounded-t`} style={{ height: `${Math.max(count * 8, 12)}px` }}></div>
-            <span className="text-xs mt-2 text-center">{label}</span>
+          <div key={label} className="flex flex-col items-center w-20">
+            <span className="text-lg font-bold mb-2">{count}</span>
+            <div className={`${color} w-10 rounded-t-lg shadow-md`} style={{ height: `${Math.max(count * 8, 16)}px` }}></div>
+            <span className="text-sm mt-3 text-center font-medium text-gray-700">{label}</span>
           </div>
         ))}
       </div>
@@ -893,7 +893,6 @@ const TurnifyPortal = () => {
     if (allZero) {
       reasonCounts = { 'Quality Issue': 12, 'Wrong Item': 10, 'Damaged': 8, 'Other': 20 };
     }
-    // If only one reason is nonzero, add a tiny contrasting slice for visual clarity
     if (!allZero && nonZeroReasons.length === 1) {
       const mainKey = nonZeroReasons[0][0];
       const otherKey = Object.keys(reasonCounts).find(k => k !== mainKey)!;
@@ -901,8 +900,8 @@ const TurnifyPortal = () => {
     }
     const totalReasons = Object.values(reasonCounts).reduce((a, b) => a + b, 0) || 1;
     let startAngle = 0;
-    const radius = 16;
-    const cx = 16, cy = 16;
+    const radius = 20;
+    const cx = 24, cy = 24;
     const piePaths = Object.entries(reasonCounts).map(([reason, count]) => {
       const angle = (count / totalReasons) * 360;
       if (angle === 0) return null;
@@ -925,144 +924,131 @@ const TurnifyPortal = () => {
     ));
 
     return (
-      <div className="max-w-7xl mx-auto p-6">
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total Returns</p>
-                <p className="text-2xl font-bold text-gray-900">{sampleAnalytics.totalReturns}</p>
-              </div>
-              <Package className="h-8 w-8 text-blue-600" />
-            </div>
+      <div className="min-h-[calc(100vh-80px)] bg-gradient-to-br from-blue-50 via-white to-purple-50 flex flex-col items-center justify-start py-10 px-2 md:px-8">
+        <div className="w-full max-w-6xl mx-auto">
+          <div className="mb-10 text-center">
+            <h1 className="text-4xl md:text-5xl font-extrabold text-blue-900 mb-2 tracking-tight">Welcome to Turnify</h1>
+            <p className="text-lg md:text-xl text-gray-700 font-medium mb-4">Your B2B Returns, Simplified.</p>
+            <p className="text-base md:text-lg text-gray-500 max-w-2xl mx-auto">Easily manage, track, and approve returns with AI-powered insights and a seamless workflow. Designed for retail partners, CSRs, and admins.</p>
           </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Pending Approvals</p>
-                <p className="text-2xl font-bold text-orange-600">{sampleAnalytics.pendingApprovals}</p>
-              </div>
-              <Clock className="h-8 w-8 text-orange-600" />
-            </div>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Return Value</p>
-                <p className="text-2xl font-bold text-green-600">${sampleAnalytics.totalValue.toLocaleString()}</p>
-              </div>
-              <CreditCard className="h-8 w-8 text-green-600" />
-            </div>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Avg Processing</p>
-                <p className="text-2xl font-bold text-purple-600">{sampleAnalytics.avgProcessingTime}</p>
-              </div>
-              <BarChart3 className="h-8 w-8 text-purple-600" />
-            </div>
-          </div>
-        </div>
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <button 
-            onClick={() => navigate('item-selection')}
-            className="bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow-sm p-4 flex flex-col items-center hover:shadow-md transition"
-          >
-            <Package className="h-8 w-8 text-white mb-2" />
-            <span className="font-semibold text-base">Create New Return</span>
-            <span className="text-xs text-blue-100 mt-1">Start a new return request</span>
-          </button>
-          <button 
-            onClick={() => navigate('open-ra')}
-            className="bg-orange-600 hover:bg-orange-700 text-white rounded-md shadow-sm p-4 flex flex-col items-center hover:shadow-md transition"
-          >
-            <AlertTriangle className="h-8 w-8 text-white mb-2" />
-            <span className="font-semibold text-base">Return Without Order</span>
-            <span className="text-xs text-orange-100 mt-1">Open RA for items w/o order</span>
-          </button>
-          <button 
-            onClick={() => navigate('returns-list')}
-            className="bg-green-600 hover:bg-green-700 text-white rounded-md shadow-sm p-4 flex flex-col items-center hover:shadow-md transition"
-          >
-            <Eye className="h-8 w-8 text-white mb-2" />
-            <span className="font-semibold text-base">View Returns</span>
-            <span className="text-xs text-green-100 mt-1">Track your returns</span>
-          </button>
-          {(userRole === 'admin_csr' || userRole === 'admin_admin') && (
+          {/* Stats Row */}
+          <div className="flex flex-wrap justify-center gap-8 mb-10">
+            <div className="bg-white rounded-2xl shadow-lg px-8 py-8 flex flex-col items-center min-w-[170px] max-w-xs">
+              <Package className="h-10 w-10 text-blue-600 mb-2" />
+              <span className="text-3xl font-bold text-blue-900">{sampleAnalytics.totalReturns}</span>
+              <span className="text-base text-gray-500 mt-1">Total Returns</span>
+            </div>
+            <div className="bg-white rounded-2xl shadow-lg px-8 py-8 flex flex-col items-center min-w-[170px] max-w-xs">
+              <Clock className="h-10 w-10 text-orange-500 mb-2" />
+              <span className="text-3xl font-bold text-orange-600">{sampleAnalytics.pendingApprovals}</span>
+              <span className="text-base text-gray-500 mt-1">Pending Approvals</span>
+            </div>
+            <div className="bg-white rounded-2xl shadow-lg px-8 py-8 flex flex-col items-center min-w-[170px] max-w-xs">
+              <CreditCard className="h-10 w-10 text-green-600 mb-2" />
+              <span className="text-3xl font-bold text-green-700">${sampleAnalytics.totalValue.toLocaleString()}</span>
+              <span className="text-base text-gray-500 mt-1">Return Value</span>
+            </div>
+            <div className="bg-white rounded-2xl shadow-lg px-8 py-8 flex flex-col items-center min-w-[170px] max-w-xs">
+              <BarChart3 className="h-10 w-10 text-purple-600 mb-2" />
+              <span className="text-3xl font-bold text-purple-700">{sampleAnalytics.avgProcessingTime}</span>
+              <span className="text-base text-gray-500 mt-1">Avg Processing</span>
+            </div>
+          </div>
+
+          {/* Actions Row */}
+          <div className="flex flex-wrap justify-center gap-8 mb-12">
             <button 
-              onClick={() => navigate('admin-dashboard')}
-              className="bg-purple-600 hover:bg-purple-700 text-white rounded-md shadow-sm p-4 flex flex-col items-center hover:shadow-md transition"
+              onClick={() => navigate('item-selection')}
+              className="bg-blue-700 hover:bg-blue-800 text-white rounded-2xl shadow-lg px-8 py-6 flex flex-col items-center font-semibold text-lg transition min-w-[220px] max-w-xs"
             >
-              <Users className="h-8 w-8 text-white mb-2" />
-              <span className="font-semibold text-base">Admin Dashboard</span>
-              <span className="text-xs text-purple-100 mt-1">Manage approvals</span>
+              <Package className="h-8 w-8 text-white mb-2" />
+              Create New Return
+              <span className="text-xs text-blue-100 mt-1 font-normal">Start a new return request</span>
             </button>
-          )}
-        </div>
-
-        {/* Metrics & Analytics Section */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          {/* Returns by Status Bar Chart */}
-          <div className="bg-white rounded-lg shadow p-6 flex flex-col items-center">
-            <h3 className="text-lg font-semibold mb-4 text-center w-full">Returns by Status</h3>
-            {barChart}
+            <button 
+              onClick={() => navigate('open-ra')}
+              className="bg-orange-500 hover:bg-orange-600 text-white rounded-2xl shadow-lg px-8 py-6 flex flex-col items-center font-semibold text-lg transition min-w-[220px] max-w-xs"
+            >
+              <AlertTriangle className="h-8 w-8 text-white mb-2" />
+              Return Without Order
+              <span className="text-xs text-orange-100 mt-1 font-normal">Open RA for items w/o order</span>
+            </button>
+            <button 
+              onClick={() => navigate('returns-list')}
+              className="bg-green-600 hover:bg-green-700 text-white rounded-2xl shadow-lg px-8 py-6 flex flex-col items-center font-semibold text-lg transition min-w-[220px] max-w-xs"
+            >
+              <Eye className="h-8 w-8 text-white mb-2" />
+              View Returns
+              <span className="text-xs text-green-100 mt-1 font-normal">Track your returns</span>
+            </button>
+            {(userRole === 'admin_csr' || userRole === 'admin_admin') && (
+              <button 
+                onClick={() => navigate('admin-dashboard')}
+                className="bg-purple-600 hover:bg-purple-700 text-white rounded-2xl shadow-lg px-8 py-6 flex flex-col items-center font-semibold text-lg transition min-w-[220px] max-w-xs"
+              >
+                <Users className="h-8 w-8 text-white mb-2" />
+                Admin Dashboard
+                <span className="text-xs text-purple-100 mt-1 font-normal">Manage approvals</span>
+              </button>
+            )}
           </div>
-          {/* Return Reasons Pie Chart (SVG, dynamic) */}
-          <div className="bg-white rounded-lg shadow p-6 flex flex-col items-center">
-            <h3 className="text-lg font-semibold mb-4 text-center w-full">Return Reasons</h3>
-            <svg width="100" height="100" viewBox="0 0 32 32" className="mb-2">
-              <circle r="16" cx="16" cy="16" fill="#e5e7eb" />
-              {piePaths}
-            </svg>
-            <div className="w-full flex flex-wrap justify-center gap-2 text-xs">
-              {pieLegend}
+
+          {/* Analytics Section */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 mb-12">
+            {/* Returns by Status Bar Chart */}
+            <div className="bg-white rounded-2xl shadow-lg p-8 flex flex-col items-center">
+              <h3 className="text-lg font-semibold mb-4 text-center w-full">Returns by Status</h3>
+              {barChart}
+            </div>
+            {/* Return Reasons Pie Chart (SVG, dynamic) */}
+            <div className="bg-white rounded-2xl shadow-lg p-8 flex flex-col items-center">
+              <h3 className="text-lg font-semibold mb-4 text-center w-full">Return Reasons</h3>
+              <svg width="60" height="60" viewBox="0 0 48 48" className="mb-2">
+                <circle r="24" cx="24" cy="24" fill="#e5e7eb" />
+                {piePaths}
+              </svg>
+              <div className="w-full flex flex-wrap justify-center gap-2 text-xs">
+                {pieLegend}
+              </div>
+            </div>
+            {/* Top Partners Summary */}
+            <div className="bg-white rounded-2xl shadow-lg p-8 flex flex-col items-center">
+              <h3 className="text-lg font-semibold mb-4">Top Partners</h3>
+              <div className="w-full space-y-2">
+                <div className="flex justify-between text-sm"><span>Tapri Store #001</span><span className="font-bold">45 returns</span></div>
+                <div className="flex justify-between text-sm"><span>Thela Express</span><span className="font-bold">38 returns</span></div>
+                <div className="flex justify-between text-sm"><span>CP Store Mumbai</span><span className="font-bold">29 returns</span></div>
+              </div>
             </div>
           </div>
-          {/* Top Partners Summary */}
-          <div className="bg-white rounded-lg shadow p-6 flex flex-col items-center">
-            <h3 className="text-lg font-semibold mb-4">Top Partners</h3>
-            <div className="w-full space-y-2">
-              <div className="flex justify-between text-sm"><span>Tapri Store #001</span><span className="font-bold">45 returns</span></div>
-              <div className="flex justify-between text-sm"><span>Thela Express</span><span className="font-bold">38 returns</span></div>
-              <div className="flex justify-between text-sm"><span>CP Store Mumbai</span><span className="font-bold">29 returns</span></div>
-            </div>
-          </div>
-        </div>
 
-        {/* AI Features Section */}
-        {showAIFeatures && (
-          <div
-            className="bg-gradient-to-br from-blue-50/80 to-white/80 backdrop-blur-md shadow-xl rounded-2xl border border-blue-100 p-6 mb-8 max-w-md mx-auto md:mx-0 md:fixed md:right-8 md:top-28 md:w-96 animate-fade-in z-20"
-            style={{ transition: 'box-shadow 0.3s' }}
-          >
-            <div className="flex justify-between items-center mb-3">
-              <h2 className="text-2xl font-extrabold text-blue-800 flex items-center gap-2">
-                <span role="img" aria-label="AI">🤖</span>
-                AI Features in Turnify
-              </h2>
+          {/* AI Features Section */}
+          {showAIFeatures && (
+            <div
+              className="bg-gradient-to-br from-blue-50/80 to-white/80 backdrop-blur-md shadow-xl rounded-2xl border border-blue-100 p-6 mb-8 max-w-md mx-auto md:mx-0 md:fixed md:right-8 md:top-28 md:w-96 animate-fade-in z-20"
+              style={{ transition: 'box-shadow 0.3s' }}
+            >
+              <h2 className="text-xl font-bold text-blue-900 mb-2 flex items-center"><span className="mr-2">🤖</span>AI Features</h2>
+              <ul className="list-disc pl-6 text-blue-900 text-base space-y-1">
+                <li>Automated return approval using AI risk analysis</li>
+                <li>AI-generated recommendations for manual review</li>
+                <li>Fraud detection and flagging of suspicious returns</li>
+                <li>Smart inventory optimization suggestions</li>
+                <li>Real-time AI status updates and explanations</li>
+                <li>Seamless SAP S/4 HANA integration</li>
+                <li>Configurable approval workflows and custom logic</li>
+                <li>Flexible product identifier support (SKU, UPC, EAN)</li>
+              </ul>
               <button
-                className="ml-2 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded hover:bg-blue-200 transition"
+                className="ml-2 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded hover:bg-blue-200 transition mt-4"
                 onClick={() => setShowAIFeatures(false)}
               >
                 Hide Me
               </button>
             </div>
-            <ul className="list-disc pl-6 text-blue-900 text-base space-y-1">
-              <li>Automated return approval using AI risk analysis</li>
-              <li>AI-generated recommendations for manual review</li>
-              <li>Fraud detection and flagging of suspicious returns</li>
-              <li>Smart inventory optimization suggestions</li>
-              <li>Real-time AI status updates and explanations</li>
-              <li>Seamless SAP S/4 HANA integration</li>
-              <li>Configurable approval workflows and custom logic</li>
-              <li>Flexible product identifier support (SKU, UPC, EAN)</li>
-            </ul>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     );
   };
