@@ -29,38 +29,7 @@ import { TurnifyApprovalCheck } from './TurnifyApprovalCheck';
 import { TurnifyApprovalPending } from './TurnifyApprovalPending';
 import { TurnifyConfirmation } from './TurnifyConfirmation';
 import { TurnifyReturnDetailsView } from './TurnifyReturnDetailsView';
-
-// Type definitions
-export type ReturnItem = {
-  sku: string;
-  title: string;
-  qty: number;
-  price?: number;
-  available_return?: number;
-  po_number?: string;
-  return_qty?: number;
-  reason?: string;
-  isOpenRA?: boolean;
-};
-
-interface ReturnData {
-  id: number;
-  rma_number: string;
-  po_number: string;
-  status: string;
-  created_at: string;
-  total_value: number;
-  items: {
-    sku: string;
-    title: string;
-    qty: number;
-    reason: string;
-    comment?: string;
-  }[];
-  approval_needed: boolean;
-  approver?: string | null;
-  tracking_number?: string | null;
-}
+import { ReturnItem, ReturnData } from '../types';
 
 // Sample Data
 const initialOrders = [
@@ -70,9 +39,9 @@ const initialOrders = [
     order_date: "2024-03-15",
     total: 15420.50,
     items: [
-      { sku: "SH-SN-001", title: "Premium Running Shoes", qty: 50, price: 89.99, available_return: 45 },
-      { sku: "SH-CS-002", title: "Casual Sneakers", qty: 30, price: 59.99, available_return: 30 },
-      { sku: "SH-BT-003", title: "Leather Boots", qty: 25, price: 129.99, available_return: 20 }
+      { upc: "00012345678901", title: "Premium Running Shoes", qty: 50, price: 89.99, available_return: 45 },
+      { upc: "00012345678902", title: "Casual Sneakers", qty: 30, price: 59.99, available_return: 30 },
+      { upc: "00012345678903", title: "Leather Boots", qty: 25, price: 129.99, available_return: 20 }
     ]
   },
   {
@@ -81,8 +50,8 @@ const initialOrders = [
     order_date: "2024-03-20",
     total: 8950.25,
     items: [
-      { sku: "SH-SN-004", title: "Athletic Trainers", qty: 40, price: 79.99, available_return: 35 },
-      { sku: "SH-AC-005", title: "Shoe Care Kit", qty: 20, price: 24.99, available_return: 18 }
+      { upc: "00012345678904", title: "Athletic Trainers", qty: 40, price: 79.99, available_return: 35 },
+      { upc: "00012345678905", title: "Shoe Care Kit", qty: 20, price: 24.99, available_return: 18 }
     ]
   },
   {
@@ -91,8 +60,8 @@ const initialOrders = [
     order_date: "2024-03-22",
     total: 12500.75,
     items: [
-      { sku: "SH-SN-006", title: "Basketball Shoes", qty: 35, price: 99.99, available_return: 30 },
-      { sku: "SH-SN-007", title: "Tennis Shoes", qty: 25, price: 69.99, available_return: 20 }
+      { upc: "00012345678906", title: "Basketball Shoes", qty: 35, price: 99.99, available_return: 30 },
+      { upc: "00012345678907", title: "Tennis Shoes", qty: 25, price: 69.99, available_return: 20 }
     ]
   },
   {
@@ -101,8 +70,8 @@ const initialOrders = [
     order_date: "2024-03-25",
     total: 18750.00,
     items: [
-      { sku: "SH-BT-008", title: "Hiking Boots", qty: 40, price: 149.99, available_return: 35 },
-      { sku: "SH-AC-009", title: "Shoe Insoles", qty: 50, price: 19.99, available_return: 45 }
+      { upc: "00012345678908", title: "Hiking Boots", qty: 40, price: 149.99, available_return: 35 },
+      { upc: "00012345678909", title: "Shoe Insoles", qty: 50, price: 19.99, available_return: 45 }
     ]
   },
   {
@@ -111,8 +80,8 @@ const initialOrders = [
     order_date: "2024-03-28",
     total: 9500.50,
     items: [
-      { sku: "SH-SN-010", title: "Slip-on Shoes", qty: 30, price: 49.99, available_return: 25 },
-      { sku: "SH-SN-011", title: "Loafers", qty: 25, price: 79.99, available_return: 20 }
+      { upc: "00012345678910", title: "Slip-on Shoes", qty: 30, price: 49.99, available_return: 25 },
+      { upc: "00012345678911", title: "Loafers", qty: 25, price: 79.99, available_return: 20 }
     ]
   }
 ];
@@ -126,7 +95,7 @@ const initialReturns = [
     created_at: "2024-03-22",
     total_value: 562.50,
     items: [
-      { sku: "SH-SN-001", title: "Premium Running Shoes", qty: 5, reason: "Damaged during transit" }
+      { upc: "00012345678901", title: "Premium Running Shoes", qty: 5, reason: "Damaged during transit" }
     ],
     approval_needed: true,
     approver: "John Smith (CSR)",
@@ -140,7 +109,7 @@ const initialReturns = [
     created_at: "2024-03-23",
     total_value: 190.00,
     items: [
-      { sku: "SH-AC-005", title: "Shoe Care Kit", qty: 2, reason: "Wrong product received" }
+      { upc: "00012345678905", title: "Shoe Care Kit", qty: 2, reason: "Wrong product received" }
     ],
     approval_needed: true
   },
@@ -152,7 +121,7 @@ const initialReturns = [
     created_at: "2024-03-24",
     total_value: 699.90,
     items: [
-      { sku: "SH-SN-006", title: "Basketball Shoes", qty: 7, reason: "Quality issue" }
+      { upc: "00012345678906", title: "Basketball Shoes", qty: 7, reason: "Quality issue" }
     ],
     approval_needed: false,
     approver: "Auto-approved",
@@ -166,7 +135,7 @@ const initialReturns = [
     created_at: "2024-03-25",
     total_value: 149.99,
     items: [
-      { sku: "SH-BT-008", title: "Hiking Boots", qty: 1, reason: "Customer changed mind" }
+      { upc: "00012345678908", title: "Hiking Boots", qty: 1, reason: "Customer changed mind" }
     ],
     approval_needed: true,
     approver: "Sarah Johnson (CSR)"
@@ -179,7 +148,7 @@ const initialReturns = [
     created_at: "2024-03-26",
     total_value: 399.95,
     items: [
-      { sku: "SH-SN-010", title: "Slip-on Shoes", qty: 8, reason: "Size mismatch" }
+      { upc: "00012345678910", title: "Slip-on Shoes", qty: 8, reason: "Size mismatch" }
     ],
     approval_needed: false,
     approver: "Auto-approved",
@@ -214,14 +183,14 @@ const generateSampleData = () => {
     const orderDate = new Date(2024, 2, 15 + i);
     const items = [
       {
-        sku: `SH-SN-${String(i).padStart(3, '0')}`,
+        upc: `000123456789${String(i).padStart(2, '0')}`,
         title: `Running Shoes Model ${i}`,
         qty: 20 + (i % 30), // Deterministic quantity
         price: Number((50 + (i % 50) + 49.99).toFixed(2)), // Deterministic price
         available_return: 15 + (i % 25) // Deterministic available return
       },
       {
-        sku: `SH-AC-${String(i).padStart(3, '0')}`,
+        upc: `000123456789${String(i).padStart(2, '0')}`,
         title: `Shoe Accessories Set ${i}`,
         qty: 10 + (i % 20), // Deterministic quantity
         price: Number((20 + (i % 30) + 19.99).toFixed(2)), // Deterministic price
@@ -245,7 +214,7 @@ const generateSampleData = () => {
     const status = statuses[statusIndex];
     const items = [
       {
-        sku: `SH-SN-${String(i).padStart(3, '0')}`,
+        upc: `000123456789${String(i).padStart(2, '0')}`,
         title: `Running Shoes Model ${i}`,
         qty: 1 + (i % 10), // Deterministic quantity
         reason: reasons[i % reasons.length] // Deterministic reason
@@ -283,7 +252,7 @@ interface OrderItemProps {
 }
 const OrderItem: React.FC<OrderItemProps> = React.memo(({ item, order, selectedItems, onToggleItem }) => {
   const isSelected = selectedItems.some(
-    (selected: ReturnItem) => selected.sku === item.sku && selected.po_number === order.po_number
+    (selected: ReturnItem) => selected.upc === item.upc && selected.po_number === order.po_number
   );
 
   const handleToggle = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -303,7 +272,7 @@ const OrderItem: React.FC<OrderItemProps> = React.memo(({ item, order, selectedI
           <div>
             <p className="font-medium">{item.title}</p>
             <p className="text-sm text-gray-600">
-              SKU: {item.sku} • Qty: {item.qty} • Available: {item.available_return}
+              UPC: {item.upc} • Qty: {item.qty} • Available: {item.available_return}
             </p>
           </div>
         </div>
@@ -353,7 +322,7 @@ const OrderSection: React.FC<OrderSectionProps> = React.memo(({ order, selectedI
       <div className="space-y-3">
         {order.items.map((item: any, index: number) => (
           <OrderItem
-            key={`${order.po_number}-${item.sku}-${index}`}
+            key={`${order.po_number}-${item.upc}-${index}`}
             item={item}
             order={order}
             selectedItems={selectedItems}
@@ -371,22 +340,43 @@ interface ItemSelectionPageProps {
   selectedItems: ReturnItem[];
   setSelectedItems: React.Dispatch<React.SetStateAction<ReturnItem[]>>;
   sampleOrders: any[];
+  returnQuantities: Record<string, number>;
+  setReturnQuantities: React.Dispatch<React.SetStateAction<Record<string, number>>>;
+  returnReasons: Record<string, string>;
+  setReturnReasons: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  returnComments: Record<string, string>;
+  setReturnComments: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  customReturnReasons: string[];
 }
-const ItemSelectionPage: React.FC<ItemSelectionPageProps> = ({ navigate, selectedItems, setSelectedItems, sampleOrders }) => {
-  const [searchBySKU, setSearchBySKU] = React.useState('');
+const ItemSelectionPage: React.FC<ItemSelectionPageProps> = ({ 
+  navigate, 
+  selectedItems, 
+  setSelectedItems, 
+  sampleOrders,
+  returnQuantities,
+  setReturnQuantities,
+  returnReasons,
+  setReturnReasons,
+  returnComments,
+  setReturnComments,
+  customReturnReasons
+}) => {
+  const [searchByUPC, setSearchByUPC] = React.useState('');
   const [filteredOrders, setFilteredOrders] = React.useState(sampleOrders);
   const [expandedPOs, setExpandedPOs] = React.useState<Record<string, boolean>>({});
+  // Add refs for PO rows
+  const poRefs = React.useRef<Record<string, HTMLTableRowElement | null>>({});
 
   React.useEffect(() => {
     setFilteredOrders(sampleOrders);
   }, [sampleOrders]);
 
   const handleSearchChange = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchBySKU(e.target.value);
+    setSearchByUPC(e.target.value);
   }, []);
 
   const handleSearch = React.useCallback(() => {
-    const query = searchBySKU.trim().toLowerCase();
+    const query = searchByUPC.trim().toLowerCase();
     if (!query) {
       setFilteredOrders(sampleOrders);
       return;
@@ -395,13 +385,19 @@ const ItemSelectionPage: React.FC<ItemSelectionPageProps> = ({ navigate, selecte
       sampleOrders.filter(order =>
         order.po_number.toLowerCase().includes(query) ||
         order.items.some((item: any) =>
-          item.sku.toLowerCase().includes(query)
+          item.upc.toLowerCase().includes(query)
         )
       )
     );
-  }, [searchBySKU, sampleOrders]);
+  }, [searchByUPC, sampleOrders]);
 
-  const handleToggleItem = React.useCallback((isChecked: boolean, item: ReturnItem, poNumber: string) => {
+  // Helper to get a stable, unique key for each item
+  const getItemKey = (item: ReturnItem, poNumber: string, index: number) =>
+    `${item.upc}_${poNumber}_${index}`;
+
+  const handleToggleItem = React.useCallback((isChecked: boolean, item: ReturnItem, poNumber: string, index: number) => {
+    const itemKey = getItemKey(item, poNumber, index);
+    
     if (isChecked) {
       setSelectedItems(prev => [...prev, {
         ...item,
@@ -409,24 +405,115 @@ const ItemSelectionPage: React.FC<ItemSelectionPageProps> = ({ navigate, selecte
         return_qty: item.available_return,
         reason: ''
       }]);
+      // Initialize default values
+      setReturnQuantities(prev => ({ ...prev, [itemKey]: item.available_return || 1 }));
+      setReturnReasons(prev => ({ ...prev, [itemKey]: '' }));
+      setReturnComments(prev => ({ ...prev, [itemKey]: '' }));
     } else {
       setSelectedItems(prev => prev.filter(selected => 
-        !(selected.sku === item.sku && selected.po_number === poNumber)
+        !(selected.upc === item.upc && selected.po_number === poNumber)
       ));
+      // Clear the data when unselected
+      setReturnQuantities(prev => Object.fromEntries(
+        Object.entries(prev).filter(([key]) => key !== itemKey)
+      ) as Record<string, number>);
+      setReturnReasons(prev => Object.fromEntries(
+        Object.entries(prev).filter(([key]) => key !== itemKey)
+      ) as Record<string, string>);
+      setReturnComments(prev => Object.fromEntries(
+        Object.entries(prev).filter(([key]) => key !== itemKey)
+      ) as Record<string, string>);
     }
-  }, [setSelectedItems]);
+  }, [setSelectedItems, setReturnQuantities, setReturnReasons, setReturnComments]);
 
-  const handleSelectAllItems = React.useCallback((allItems: ReturnItem[]) => {
-    setSelectedItems(allItems);
-  }, [setSelectedItems]);
+  const handleSelectAllItems = React.useCallback((allItems: ReturnItem[], poNumber: string) => {
+    const newSelectedItems = allItems.map((item, index) => ({
+      ...item,
+      po_number: poNumber,
+      return_qty: item.available_return,
+      reason: ''
+    }));
+    setSelectedItems(newSelectedItems);
+    
+    // Initialize default values for all items
+    const newQuantities = { ...returnQuantities };
+    const newReasons = { ...returnReasons };
+    const newComments = { ...returnComments };
+    
+    allItems.forEach((item, index) => {
+      const itemKey = getItemKey(item, poNumber, index);
+      newQuantities[itemKey] = item.available_return || 1;
+      newReasons[itemKey] = '';
+      newComments[itemKey] = '';
+    });
+    
+    setReturnQuantities(newQuantities);
+    setReturnReasons(newReasons);
+    setReturnComments(newComments);
+  }, [setSelectedItems, returnQuantities, returnReasons, returnComments, setReturnQuantities, setReturnReasons, setReturnComments]);
 
   const handleBackToDashboard = React.useCallback(() => {
     navigate('landing');
   }, [navigate]);
 
   const handleContinue = React.useCallback(() => {
+    // Validation: Check if all selected items have return reasons
+    const itemsWithoutReason = selectedItems.filter((item, index) => {
+      const itemKey = getItemKey(item, item.po_number || '', index);
+      const reason = returnReasons[itemKey] || '';
+      return !reason.trim();
+    });
+
+    if (itemsWithoutReason.length > 0) {
+      // Expand POs with errors
+      setExpandedPOs(prev => {
+        const newExpanded = { ...prev };
+        itemsWithoutReason.forEach(item => {
+          if (item.po_number) newExpanded[item.po_number] = true;
+        });
+        return newExpanded;
+      });
+      // Scroll to first error PO
+      setTimeout(() => {
+        const firstErrorPO = itemsWithoutReason[0]?.po_number;
+        if (firstErrorPO && poRefs.current[firstErrorPO]) {
+          poRefs.current[firstErrorPO]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 100);
+      alert(`Return Reason is required for all selected items. Please select a reason for:\n${itemsWithoutReason.map(item => `- ${item.title}`).join('\n')}`);
+      return;
+    }
+
+    // Validation: Check if items with "Other" reason have comments
+    const itemsWithOtherReasonWithoutComment = selectedItems.filter((item, index) => {
+      const itemKey = getItemKey(item, item.po_number || '', index);
+      const reason = returnReasons[itemKey] || '';
+      const comment = returnComments[itemKey] || '';
+      return reason === 'Other' && !comment.trim();
+    });
+
+    if (itemsWithOtherReasonWithoutComment.length > 0) {
+      // Expand POs with errors
+      setExpandedPOs(prev => {
+        const newExpanded = { ...prev };
+        itemsWithOtherReasonWithoutComment.forEach(item => {
+          if (item.po_number) newExpanded[item.po_number] = true;
+        });
+        return newExpanded;
+      });
+      // Scroll to first error PO
+      setTimeout(() => {
+        const firstErrorPO = itemsWithOtherReasonWithoutComment[0]?.po_number;
+        if (firstErrorPO && poRefs.current[firstErrorPO]) {
+          poRefs.current[firstErrorPO]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 100);
+      alert(`Additional Comments are required when Return Reason is "Other". Please provide comments for:\n${itemsWithOtherReasonWithoutComment.map(item => `- ${item.title}`).join('\n')}`);
+      return;
+    }
+
     navigate('return-details');
-  }, [navigate]);
+  }, [navigate, selectedItems, returnReasons, returnComments]);
 
   const toggleExpand = (poNumber: string) => {
     setExpandedPOs(prev => ({ ...prev, [poNumber]: !prev[poNumber] }));
@@ -443,9 +530,9 @@ const ItemSelectionPage: React.FC<ItemSelectionPageProps> = ({ navigate, selecte
           Back to Dashboard
         </button>
         <h1 className="text-3xl font-bold text-gray-900">Select Items for Return</h1>
-        <p className="text-gray-600 mt-2">Choose items from your orders or search by SKU</p>
+        <p className="text-gray-600 mt-2">Choose items from your orders or search by UPC</p>
       </div>
-      {/* SKU Search Section */}
+      {/* UPC Search Section */}
       <div className="bg-white rounded-lg shadow p-6 mb-6">
         <h2 className="text-xl font-semibold mb-4 flex items-center">
           <Search className="h-5 w-5 mr-2" />
@@ -454,8 +541,8 @@ const ItemSelectionPage: React.FC<ItemSelectionPageProps> = ({ navigate, selecte
         <div className="flex gap-4 mb-4">
           <input
             type="text"
-            placeholder="Enter SKU or Order Number to search..."
-            value={searchBySKU}
+            placeholder="Enter UPC or Order Number to search..."
+            value={searchByUPC}
             onChange={handleSearchChange}
             className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
@@ -466,10 +553,10 @@ const ItemSelectionPage: React.FC<ItemSelectionPageProps> = ({ navigate, selecte
             Search
           </button>
         </div>
-        <p className="text-sm text-gray-600">Search for items by SKU or Order Number regardless of order date</p>
+        <p className="text-sm text-gray-600">Search for items by UPC or Order Number regardless of order date</p>
       </div>
       {/* Table View with Scrollbars */}
-      <div className="bg-white rounded-lg shadow overflow-x-auto overflow-y-auto max-h-[500px]">
+      <div className="bg-white rounded-lg shadow overflow-x-auto overflow-y-auto max-h-[600px]">
         <table className="min-w-full text-sm">
           <thead className="sticky top-0 bg-gray-100 z-10">
             <tr>
@@ -483,23 +570,33 @@ const ItemSelectionPage: React.FC<ItemSelectionPageProps> = ({ navigate, selecte
           <tbody>
             {filteredOrders.map((order: any) => {
               const anySelected = order.items.some((item: any) =>
-                selectedItems.some((selected: ReturnItem) => selected.sku === item.sku && selected.po_number === order.po_number)
+                selectedItems.some((selected: ReturnItem) => selected.upc === item.upc && selected.po_number === order.po_number)
               );
               const allSelected = order.items.every((item: any) =>
-                selectedItems.some((selected: ReturnItem) => selected.sku === item.sku && selected.po_number === order.po_number)
+                selectedItems.some((selected: ReturnItem) => selected.upc === item.upc && selected.po_number === order.po_number)
               );
               const handleSelectOrUnselectAll = () => {
                 if (anySelected) {
-                  // Unselect all items for this PO
                   setSelectedItems(prev => prev.filter(selected => selected.po_number !== order.po_number));
+                  const newQuantities = { ...returnQuantities };
+                  const newReasons = { ...returnReasons };
+                  const newComments = { ...returnComments };
+                  order.items.forEach((item: any, index: number) => {
+                    const itemKey = getItemKey(item, order.po_number, index);
+                    delete newQuantities[itemKey];
+                    delete newReasons[itemKey];
+                    delete newComments[itemKey];
+                  });
+                  setReturnQuantities(newQuantities as Record<string, number>);
+                  setReturnReasons(newReasons as Record<string, string>);
+                  setReturnComments(newComments as Record<string, string>);
                 } else {
-                  // Select all items for this PO
-                  handleSelectAllItems(order.items.map((item: any) => ({ ...item, po_number: order.po_number, return_qty: item.available_return, reason: '' })));
+                  handleSelectAllItems(order.items.map((item: any) => ({ ...item, po_number: order.po_number, return_qty: item.available_return, reason: '' })), order.po_number);
                 }
               };
               return (
                 <React.Fragment key={order.id}>
-                  <tr className={`border-b ${anySelected ? 'bg-blue-50' : ''}`}>
+                  <tr ref={el => poRefs.current[order.po_number] = el} className={`border-b ${anySelected ? 'bg-blue-50' : ''}`}>
                     <td className="px-4 py-2 font-semibold">
                       <button onClick={() => toggleExpand(order.po_number)} className="text-blue-600 hover:underline mr-2">
                         {expandedPOs[order.po_number] ? '-' : '+'}
@@ -518,28 +615,110 @@ const ItemSelectionPage: React.FC<ItemSelectionPageProps> = ({ navigate, selecte
                       </button>
                     </td>
                   </tr>
-                  {expandedPOs[order.po_number] && order.items.map((item: any, idx: number) => {
-                    const isSelected = selectedItems.some(
-                      (selected: ReturnItem) => selected.sku === item.sku && selected.po_number === order.po_number
-                    );
-                    return (
-                      <tr key={item.sku + '-' + idx} className="bg-gray-50 border-b">
-                        <td className="px-8 py-2" colSpan={1}>
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={e => handleToggleItem(e.target.checked, item, order.po_number)}
-                            className="h-4 w-4 text-blue-600 mr-2"
-                          />
-                          <span className="font-medium">{item.title}</span>
-                        </td>
-                        <td className="px-4 py-2">SKU: {item.sku}</td>
-                        <td className="px-4 py-2">Qty: {item.qty}</td>
-                        <td className="px-4 py-2">Available: {item.available_return}</td>
-                        <td className="px-4 py-2">${item.price}</td>
-                      </tr>
-                    );
-                  })}
+                  {expandedPOs[order.po_number] && (
+                    <tr>
+                      <td colSpan={5} className="p-0">
+                        <div className="pl-8 border-l-4 border-blue-100 bg-gray-50 rounded-lg space-y-4 my-2">
+                          {order.items.map((item: any, idx: number) => {
+                            const isSelected = selectedItems.some(
+                              (selected: ReturnItem) => selected.upc === item.upc && selected.po_number === order.po_number
+                            );
+                            const itemKey = getItemKey(item, order.po_number, idx);
+                            return (
+                              <div key={item.upc + '-' + idx} className={`flex flex-wrap items-start gap-4 py-4 border-b last:border-b-0 rounded transition-colors duration-150 ${isSelected ? 'bg-blue-50' : 'hover:bg-gray-100'}`}> 
+                                <div className="flex items-center min-w-[220px]">
+                                  <input
+                                    type="checkbox"
+                                    checked={isSelected}
+                                    onChange={e => handleToggleItem(e.target.checked, item, order.po_number, idx)}
+                                    className="h-4 w-4 text-blue-600 mr-3"
+                                  />
+                                  <div>
+                                    <div className="font-medium text-base">{item.title}</div>
+                                    <div className="text-xs text-gray-500">UPC: {item.upc}</div>
+                                    <div className="text-xs text-gray-500">Qty: {item.qty} &bull; Available: {item.available_return}</div>
+                                  </div>
+                                </div>
+                                <div className="flex flex-col gap-2 min-w-[100px]">
+                                  <span className="text-xs text-gray-400">Unit Price</span>
+                                  <span className="font-semibold">${item.price}</span>
+                                </div>
+                                <div className="flex flex-col gap-2 min-w-[100px]">
+                                  <span className="text-xs text-gray-400">Return Qty</span>
+                                  <input
+                                    type="number"
+                                    min="1"
+                                    max={item.available_return}
+                                    value={isSelected ? (returnQuantities[itemKey] ?? item.available_return) : ''}
+                                    onChange={(e) => {
+                                      let val = parseInt(e.target.value) || 1;
+                                      if (val > item.available_return) val = item.available_return;
+                                      setReturnQuantities(prev => ({
+                                        ...prev,
+                                        [itemKey]: val,
+                                      }));
+                                    }}
+                                    disabled={!isSelected}
+                                    className={`w-20 border rounded px-2 py-1 text-xs ${isSelected ? 'border-gray-300 focus:ring-2 focus:ring-blue-500' : 'border-gray-200 bg-gray-100'}`}
+                                  />
+                                  {isSelected && (returnQuantities[itemKey] ?? item.available_return) > item.available_return && (
+                                    <span className="text-red-500 text-xs mt-1">Return Quantity cannot exceed Available</span>
+                                  )}
+                                </div>
+                                <div className="flex flex-col gap-2 min-w-[160px]">
+                                  <span className="text-xs text-gray-400">Return Reason *</span>
+                                  <select
+                                    value={isSelected ? (returnReasons[itemKey] || '') : ''}
+                                    onChange={(e) => setReturnReasons(prev => ({
+                                      ...prev,
+                                      [itemKey]: e.target.value,
+                                    }))}
+                                    disabled={!isSelected}
+                                    className={`w-32 border rounded px-2 py-1 text-xs ${
+                                      isSelected 
+                                        ? (returnReasons[itemKey] ? 'border-gray-300 focus:ring-2 focus:ring-blue-500' : 'border-red-300 focus:ring-2 focus:ring-red-500') 
+                                        : 'border-gray-200 bg-gray-100'
+                                    }`}
+                                  >
+                                    <option value="">Select reason *</option>
+                                    {customReturnReasons.map(reason => (
+                                      <option key={reason} value={reason}>{reason}</option>
+                                    ))}
+                                  </select>
+                                  {isSelected && !returnReasons[itemKey] && (
+                                    <p className="text-red-500 text-xs mt-1">Return Reason is required</p>
+                                  )}
+                                </div>
+                                <div className="flex flex-col gap-2 min-w-[180px] flex-1">
+                                  <span className="text-xs text-gray-400">Comments</span>
+                                  <textarea
+                                    value={isSelected ? (returnComments[itemKey] || '') : ''}
+                                    onChange={(e) => setReturnComments(prev => ({
+                                      ...prev,
+                                      [itemKey]: e.target.value,
+                                    }))}
+                                    disabled={!isSelected}
+                                    placeholder={isSelected ? (returnReasons[itemKey] === 'Other' ? "Comments required for 'Other' reason *" : "Add comments...") : ""}
+                                    className={`w-full border rounded px-2 py-1 text-xs resize-none ${
+                                      isSelected 
+                                        ? (returnReasons[itemKey] === 'Other' && !returnComments[itemKey]?.trim() 
+                                            ? 'border-red-300 focus:ring-2 focus:ring-red-500' 
+                                            : 'border-gray-300 focus:ring-2 focus:ring-blue-500') 
+                                        : 'border-gray-200 bg-gray-100'
+                                    }`}
+                                    rows={2}
+                                  />
+                                  {isSelected && returnReasons[itemKey] === 'Other' && !returnComments[itemKey]?.trim() && (
+                                    <p className="text-red-500 text-xs mt-1">Comments required for 'Other' reason</p>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </td>
+                    </tr>
+                  )}
                 </React.Fragment>
               );
             })}
@@ -579,10 +758,10 @@ const TurnifyPortal = () => {
   const [filterStatus, setFilterStatus] = useState('all');
   const [showAIFeatures, setShowAIFeatures] = useState(true);
   const [shippingPreference, setShippingPreference] = useState('own'); // 'own', 'turnify', 'none'
-  const [searchBySKU, setSearchBySKU] = useState('');
+  const [searchByUPC, setSearchByUPC] = useState('');
   const [openRA, setOpenRA] = useState(false);
   const [openRAForm, setOpenRAForm] = useState({
-    identifierType: 'sku',
+    identifierType: 'upc',
     productId: '',
     quantity: 1,
     reason: ''
@@ -602,6 +781,7 @@ const TurnifyPortal = () => {
   const [returnReasons, setReturnReasons] = useState<Record<string, string>>({});
   const [returnQuantities, setReturnQuantities] = useState<Record<string, number>>({});
   const [returnComments, setReturnComments] = useState<Record<string, string>>({});
+  const [expandedPOs, setExpandedPOs] = useState<Record<string, boolean>>({});
 
   // Initialize returns data with state management
   const [returnsData, setReturnsData] = useState<ReturnData[]>(() => {
@@ -612,6 +792,14 @@ const TurnifyPortal = () => {
   // Function to add new return
   const addNewReturn = (newReturn: ReturnData) => {
     setReturnsData(prev => [newReturn, ...prev]);
+  };
+
+  // Function to reset item selection state
+  const resetItemSelection = () => {
+    setSelectedItems([]);
+    setReturnQuantities({});
+    setReturnReasons({});
+    setReturnComments({});
   };
 
   // Generate analytics from current returns data
@@ -628,6 +816,11 @@ const TurnifyPortal = () => {
   const navigate = (view: string, data?: ReturnData) => {
     setCurrentView(view);
     if (data) setSelectedReturn(data);
+    
+    // Reset item selection when navigating to item-selection or landing after approval check
+    if ((view === 'item-selection' || view === 'landing') && currentView === 'approval-check') {
+      resetItemSelection();
+    }
   };
 
   // Header Component
@@ -880,11 +1073,33 @@ const TurnifyPortal = () => {
       case 'landing':
         return <LandingPage />;
       case 'item-selection':
-        return <ItemSelectionPage navigate={navigate} selectedItems={selectedItems} setSelectedItems={setSelectedItems} sampleOrders={sampleOrders} />;
+        return <ItemSelectionPage 
+          navigate={navigate} 
+          selectedItems={selectedItems} 
+          setSelectedItems={setSelectedItems} 
+          sampleOrders={sampleOrders} 
+          returnQuantities={returnQuantities} 
+          setReturnQuantities={setReturnQuantities} 
+          returnReasons={returnReasons} 
+          setReturnReasons={setReturnReasons} 
+          returnComments={returnComments} 
+          setReturnComments={setReturnComments} 
+          customReturnReasons={customReturnReasons} 
+        />;
       case 'open-ra':
         return <TurnifyOpenRA navigate={navigate} openRAForm={openRAForm} setOpenRAForm={setOpenRAForm} setSelectedItems={setSelectedItems} />;
       case 'return-details':
-        return <TurnifyReturnDetails navigate={navigate} selectedItems={selectedItems} setSelectedItems={setSelectedItems} />;
+        return <TurnifyReturnDetails 
+          navigate={navigate} 
+          selectedItems={selectedItems} 
+          setSelectedItems={setSelectedItems}
+          returnQuantities={returnQuantities}
+          returnReasons={returnReasons}
+          returnComments={returnComments}
+          setReturnQuantities={setReturnQuantities}
+          setReturnReasons={setReturnReasons}
+          setReturnComments={setReturnComments}
+        />;
       case 'approval-check':
         return <TurnifyApprovalCheck selectedItems={selectedItems} returnQuantities={returnQuantities} returnReasons={returnReasons} returnComments={returnComments} returnsData={returnsData} addNewReturn={addNewReturn} navigate={navigate} />;
       case 'approval-pending':
